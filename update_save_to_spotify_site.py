@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import html
 import importlib.util
 import json
@@ -17,6 +18,7 @@ REPO_OWNER = "nyx371"
 REPO_NAME = "nyx-site-2"
 TRACKED_REPO = "spotify/save-to-spotify"
 REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_reader.py")
+SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 
 NEWS_QUERY = '"Save to Spotify" Spotify AI podcasts'
 
@@ -202,6 +204,51 @@ def link(url: str, text: str) -> str:
     return f'<a href="{esc(url)}" target="_blank" rel="noopener noreferrer">{esc(text)}</a>'
 
 
+def item_key(source: str, title: str, url: str) -> str:
+    raw = f"{source}\0{url or title}"
+    return hashlib.sha1(raw.encode("utf-8", errors="replace")).hexdigest()
+
+
+def load_seen_state():
+    try:
+        return json.loads(SEEN_STATE_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {"initialized": False, "seen": {}}
+    except Exception:
+        return {"initialized": False, "seen": {}}
+
+
+def save_seen_state(state):
+    SEEN_STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def collect_seen_items(news, gh, hn, reddit):
+    items = []
+    for i in news:
+        items.append({"source": i.get("source") or "News", "title": i.get("title"), "url": i.get("url"), "meta": i.get("published")})
+    if gh and gh.get("latest_open"):
+        for i in gh["latest_open"]:
+            items.append({"source": f"GitHub {i.get('kind')}", "title": i.get("title"), "url": i.get("url"), "meta": i.get("created_at")})
+    for i in hn:
+        items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments"})
+    for i in reddit:
+        items.append({"source": i.get("subreddit") or "Reddit", "title": i.get("title"), "url": i.get("url"), "meta": f"u/{i.get('author')} · {i.get('score')} pts · {i.get('comments')} comments"})
+    for item in items:
+        item["id"] = item_key(item.get("source", ""), item.get("title", ""), item.get("url", ""))
+    return items
+
+
+def render_new_items(new_items, initialized: bool):
+    if not initialized:
+        return '<p class="empty">Tracking initialized. Future updates will lead with posts not seen before.</p>'
+    if not new_items:
+        return '<p class="empty">No new tracked posts since the previous update.</p>'
+    return "<ul>" + "\n".join(
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{esc(i.get("meta") or "new")}</small></li>'
+        for i in new_items
+    ) + "</ul>"
+
+
 def render():
     now_utc = dt.datetime.now(dt.timezone.utc)
     now_stockholm = now_utc.astimezone(dt.ZoneInfo("Europe/Stockholm")) if hasattr(dt, "ZoneInfo") else now_utc
@@ -218,6 +265,18 @@ def main():
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
     errors = [e for e in [news_err, gh_err, hn_err, reddit_err] if e]
+
+    seen_state = load_seen_state()
+    seen = seen_state.setdefault("seen", {})
+    current_items = collect_seen_items(news, gh, hn, reddit)
+    initialized = bool(seen_state.get("initialized"))
+    new_items = [i for i in current_items if initialized and i["id"] not in seen]
+    for i in current_items:
+        seen.setdefault(i["id"], {"source": i.get("source"), "title": i.get("title"), "url": i.get("url"), "first_seen_at": now_utc.isoformat()})
+    seen_state["initialized"] = True
+    seen_state["last_updated_at"] = now_utc.isoformat()
+    save_seen_state(seen_state)
+    new_items_html = render_new_items(new_items, initialized)
 
     gh_summary = "GitHub stats unavailable"
     if gh:
@@ -286,6 +345,8 @@ def main():
     small {{ display:block; color:var(--muted); margin-top:.2rem; font-size:.82rem; }}
     .bigstat {{ font-size:1.25rem; color:#d9fbe4; font-weight:700; }}
     .warn {{ border-color:#806b2a; }}
+    .highlight {{ border-color:#1ed76088; box-shadow: 0 20px 90px #1ed76022; }}
+    .empty {{ color:var(--muted); margin:0; }}
     footer {{ max-width:1120px; margin:auto; color:var(--muted); padding:0 clamp(1rem, 5vw, 4rem) 3rem; font-size:.9rem; }}
   </style>
 </head>
@@ -300,9 +361,13 @@ def main():
     </div>
   </header>
   <main>
+    <section class="card highlight">
+      <h2>New since last update</h2>
+      {new_items_html}
+    </section>
     <section class="card">
       <h2>Current read</h2>
-      <p class="bigstat">Conversation is mostly press + Spotify/dev X + GitHub, with Reddit now tracked directly via the local reader.</p>
+      <p class="bigstat">Conversation is mostly press + Spotify/dev X + GitHub, with Reddit tracked directly via the local reader. Seen posts are persisted so fresh items appear first.</p>
     </section>
     <div class="grid">
       <section class="card"><h2>Primary links</h2><ul>{primary_html}</ul></section>
