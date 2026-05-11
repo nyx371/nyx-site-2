@@ -1,0 +1,4 @@
+# One URL per line. Items matching these URLs are excluded from the snapshot.
+# Blank lines and # comments are ignored.
+https://news.ycombinator.com/item?id=11260879
+https://www.reddit.com/r/truespotify/comments/1sjckxb/wheres_my_downloaded_songs/

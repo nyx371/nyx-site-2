@@ -1,9 +1,9 @@
 {
   "github_stars_by_day": {
-    "2026-05-11": 258
+    "2026-05-11": 259
   },
   "initialized": true,
-  "last_updated_at": "2026-05-11T20:43:51.188118+00:00",
+  "last_updated_at": "2026-05-11T20:49:13.562096+00:00",
   "seen": {
     "04debc8f57af90b84376518dad6342ce37ac6e9e": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
@@ -16,12 +16,6 @@
       "source": "PPC Land",
       "title": "Spotify lets AI agents save personal podcasts directly to your library",
       "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOYkdYVFdOeTlfRXRXaWNabUZYRDVIdTNKN1FhWUlvWUNiZnN3SmIwVDFjLS1yR3MtUExvaWl5MHVYMEFxYUVsWXVPMVhfWWxGLWxMTFduUXlDd2NOcTBUWlREY2REdUZjVFU4aHVyNU5udXdMQnVUZ2JnYnczM0M1UXdqd3QyRjhXUktPNFZocmpxdw?oc=5"
-    },
-    "17a037fa0e552f0d4e380b7b1b6bfe62363eafef": {
-      "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "source": "Hacker News",
-      "title": "Ask HN: What are you working on and why is it awesome? Please include URL",
-      "url": "https://news.ycombinator.com/item?id=11260879"
     },
     "19bec23498f4a1b57a1d21e4ec0b46b06a7e3f23": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
@@ -124,12 +118,6 @@
       "source": "GitHub PR",
       "title": "Document accepted audio formats in audio-providers.md",
       "url": "https://github.com/spotify/save-to-spotify/pull/13"
-    },
-    "b7af8eb33a6441630498b15b8e0015387d36bf31": {
-      "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "source": "r/truespotify",
-      "title": "Where's my downloaded songs?",
-      "url": "https://www.reddit.com/r/truespotify/comments/1sjckxb/wheres_my_downloaded_songs/"
     },
     "b8a916372518c5db35ee3adf058998c877b7a23a": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
