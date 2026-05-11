@@ -255,6 +255,15 @@ def link(url: str, text: str) -> str:
     return f'<a href="{esc(url)}" target="_blank" rel="noopener noreferrer">{esc(text)}</a>'
 
 
+def render_stat_grid(stats: list[tuple[str, object]]) -> str:
+    items = [
+        f'<div class="stat-box"><span>{esc(label)}</span><strong>{esc(value)}</strong></div>'
+        for label, value in stats
+        if value is not None
+    ]
+    return '<div class="stat-grid">' + "\n".join(items) + '</div>' if items else '<p class="empty">Stats unavailable.</p>'
+
+
 def normalize_url(url: str) -> str:
     if not url:
         return ""
@@ -489,26 +498,25 @@ def main():
     social_chart_html = render_social_posts_chart(seen, now_local.date())
     github_stars_chart_html = render_github_stars_chart(github_star_history, now_local.date())
 
-    gh_summary = "GitHub stats unavailable"
+    gh_stats_html = "<p class='empty'>GitHub stats unavailable.</p>"
     if gh:
-        gh_summary = f"{gh['stars']} stars · {gh['forks']} forks · {gh['open_issues']} open issues/PRs · updated {esc(gh['updated_at'])}"
+        gh_stats_html = render_stat_grid([
+            ("Stars", gh.get("stars")),
+            ("Forks", gh.get("forks")),
+            ("Open issues/PRs", gh.get("open_issues")),
+            ("Updated", gh.get("updated_at")),
+        ])
 
-    clawhub_summary = "ClawHub stats unavailable"
-    clawhub_html = "<li>No ClawHub stats found this run.</li>"
+    clawhub_stats_html = "<p class='empty'>ClawHub stats unavailable.</p>"
     if clawhub:
-        clawhub_summary = (
-            f"{clawhub.get('stars', '?')} stars · {clawhub.get('downloads', '?')} downloads · "
-            f"{clawhub.get('versions', '?')} versions · v{clawhub.get('version') or '?'}"
-        )
-        clawhub_rows = [
+        clawhub_stats_html = render_stat_grid([
+            ("Stars", clawhub.get("stars")),
+            ("Downloads", clawhub.get("downloads")),
+            ("Versions", clawhub.get("versions")),
+            ("Current version", f"v{clawhub.get('version')}" if clawhub.get("version") else None),
             ("Updated", clawhub.get("updated")),
             ("License", clawhub.get("license")),
-        ]
-        clawhub_html = "\n".join(
-            f"<li><strong>{esc(label)}</strong><small>{esc(value)}</small></li>"
-            for label, value in clawhub_rows
-            if value is not None
-        ) or clawhub_html
+        ])
 
     news_html = "\n".join(
         f'<li><strong>{esc(i["source"] or "News")}</strong>: {link(i["url"], i["title"])}<small>{esc(i["published"])}</small></li>'
@@ -584,6 +592,10 @@ def main():
     a:hover {{ color:white; text-decoration-color:var(--accent); }}
     small {{ display:block; color:var(--muted); margin-top:.2rem; font-size:.82rem; }}
     .bigstat {{ font-size:1.25rem; color:#d9fbe4; font-weight:700; }}
+    .stat-grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:.7rem; margin-bottom:.9rem; }}
+    .stat-box {{ border:1px solid var(--line); background:#ffffff08; border-radius:16px; padding:.8rem; min-width:0; }}
+    .stat-box span {{ display:block; color:var(--muted); font-size:.78rem; margin-bottom:.25rem; }}
+    .stat-box strong {{ display:block; color:#d9fbe4; font-size:1.1rem; line-height:1.15; overflow-wrap:anywhere; }}
     .chart-wrap {{ display:grid; gap:.5rem; overflow:hidden; }}
     .line-chart {{ width:100%; height:auto; display:block; }}
     .chart-grid line {{ stroke:var(--line); stroke-width:1; }}
@@ -617,8 +629,8 @@ def main():
     </section>
     <div class="grid">
       <section class="card"><h2>Primary links</h2><ul>{primary_html}</ul></section>
-      <section class="card"><h2>ClawHub skill stats</h2><p class="bigstat">{esc(clawhub_summary)}</p><ul>{clawhub_html}</ul><small>{link(CLAWHUB_URL, "Source: ClawHub skill page")}</small></section>
-      <section class="card"><h2>GitHub repo pulse</h2><p class="bigstat">{esc(gh_summary)}</p><ul>{issues_html}</ul></section>
+      <section class="card"><h2>ClawHub skill stats</h2>{clawhub_stats_html}<small>{link(CLAWHUB_URL, "Source: ClawHub skill page")}</small></section>
+      <section class="card"><h2>GitHub repo pulse</h2>{gh_stats_html}<ul>{issues_html}</ul></section>
     </div>
     <section class="card"><h2>GitHub stars per day</h2>{github_stars_chart_html}</section>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
