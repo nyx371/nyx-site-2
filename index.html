@@ -22,6 +22,12 @@
     a:hover { color:white; text-decoration-color:var(--accent); }
     small { display:block; color:var(--muted); margin-top:.2rem; font-size:.82rem; }
     .bigstat { font-size:1.25rem; color:#d9fbe4; font-weight:700; }
+    .chart-wrap { display:grid; gap:.5rem; overflow:hidden; }
+    .line-chart { width:100%; height:auto; display:block; }
+    .chart-grid line { stroke:var(--line); stroke-width:1; }
+    .chart-grid text, .chart-labels text { fill:var(--muted); font-size:12px; }
+    .line-chart polyline { fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; filter: drop-shadow(0 0 10px #1ed76055); }
+    .chart-points circle { fill:var(--accent); stroke:#d9fbe4; stroke-width:2; }
     .warn { border-color:#806b2a; }
     .highlight { border-color:#1ed76088; box-shadow: 0 20px 90px #1ed76022; }
     .empty { color:var(--muted); margin:0; }
@@ -33,15 +39,15 @@
     <h1>Save to Spotify chatter tracker</h1>
     <p class="lede">A lightweight hourly snapshot of where people are talking about Spotify’s beta CLI for saving AI-generated personal podcasts into Spotify.</p>
     <div class="meta">
-      <span class="pill">Last updated: 2026-05-11 22:34 CEST</span>
-      <span class="pill">UTC: 2026-05-11 20:34</span>
+      <span class="pill">Last updated: 2026-05-11 22:41 CEST</span>
+      <span class="pill">UTC: 2026-05-11 20:41</span>
       <span class="pill">Auto-refresh target: hourly</span>
     </div>
   </header>
   <main>
     <section class="card highlight">
       <h2>New since last update</h2>
-      <ul><li><strong>r/CLI</strong>: <a href="https://www.reddit.com/r/CLI/comments/1taernd/spotify_ceo_says_you_can_use_save_to_spotify_cli/" target="_blank" rel="noopener noreferrer">Spotify CEO says you can use Save to Spotify CLI to add personal podcasts to your Spotify library</a><small>u/LinkedInNews · 3 pts · 0 comments</small></li></ul>
+      <p class="empty">No new tracked posts since the previous update.</p>
     </section>
     <section class="card">
       <h2>Current read</h2>
@@ -75,6 +81,15 @@
 <li><strong>podcastnewsdaily.com</strong>: <a href="https://news.google.com/rss/articles/CBMi2gFBVV95cUxPaDZFeWowalZFWVB0QXI1Ti1XUGNuNU1QLTJwX1h3VDFDRDJxN2QydVdPTzFtS1NydUZsZHlDWjBYdGRyUUlzTC1FdEZpMk01NWd0c0NzTXVuSllQTlZZa2oxWG81X3I0S0JNbnE5UFhNU2tnMmFyM3drVmZaelR4dHNERG9wYnN1R1RMeU03SXZHeVpOUUlnVVRxMmNhX0ZwYWJGeWNFUnZzMzVfNmQ4SkVndGl5QWNzS2U2RTJzS1FPMndmVHVSTFBielliNVdnY1R2aHlESjdLUQ?oc=5" target="_blank" rel="noopener noreferrer">Spotify Embraces Rise Of AI ‘Personal Podcast’ Listening.</a><small>Thu, 07 May 2026 15:30:00 GMT</small></li>
 <li><strong>Latest news from Azerbaijan</strong>: <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxPM3pIdlg0dEtwOXplSGlJdWxfNnBQNm9EMW1fdkR0RkJLZjZKMWRSMkpPb21vRUw2Y3ZwQmZzRzlZM0NXTTJsZnhsQzJNSDlRQ2lFMER4ODlqYW5CekNQOHphZ3lKZTE3RUZMSGs3UFZTalFBRW1RX1hFM1N5cnJOU1YxUQ?oc=5" target="_blank" rel="noopener noreferrer">Spotify launches tool for AI-generated personal podcasts</a><small>Fri, 08 May 2026 10:42:59 GMT</small></li>
 <li><strong>The Mac Observer</strong>: <a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxON0x1Sm5OckxQWHRneUQxekxnN2pjNE5rOTRuWWo0TFh4OEdxSEVHMzV3NEwzVWZrZGVoYU80UG9KRldiOU1YczR6dUgydXllZkhlYV9WTTJJakxKWEk0aFc4ZzVvSENmUW8tRVdrUmN2ZVRESXNsMjM0TjlkanY1RFVia0gxc2IzcXRXVEY3VEZpMnVnWjRhaTRidFhXeEREelE?oc=5" target="_blank" rel="noopener noreferrer">Listen to Your Custom AI Audio With Spotify’s New Personal Podcasts</a><small>Sat, 09 May 2026 10:33:12 GMT</small></li></ul></section>
+    <section class="card"><h2>Social posts per day</h2><div class="chart-wrap" role="img" aria-label="Line chart of social and community posts first seen per day">
+      <svg class="line-chart" viewBox="0 0 820 240" preserveAspectRatio="xMidYMid meet">
+        <g class="chart-grid"><g><line x1="46" x2="802" y1="198.0" y2="198.0" /><text x="36" y="202.0" text-anchor="end">0</text></g><g><line x1="46" x2="802" y1="109.0" y2="109.0" /><text x="36" y="113.0" text-anchor="end">3</text></g><g><line x1="46" x2="802" y1="20.0" y2="20.0" /><text x="36" y="24.0" text-anchor="end">6</text></g></g>
+        <polyline points="46.0,49.7 802.0,20.0" />
+        <g class="chart-points"><circle cx="46.0" cy="49.7" r="4"><title>2026-05-10: 5 posts</title></circle><circle cx="802.0" cy="20.0" r="4"><title>2026-05-11: 6 posts</title></circle></g>
+        <g class="chart-labels"><text x="46.0" y="224" text-anchor="middle">05-10</text><text x="802.0" y="224" text-anchor="middle">05-11</text></g>
+      </svg>
+      <small>11 social/community posts tracked since 2026-05-10. Counts are based on first-seen day for X, Hacker News, and Reddit items.</small>
+    </div></section>
     <div class="grid">
       <section class="card"><h2>Social / community places to watch</h2><ul><li><strong>X / @mignano</strong>: <a href="https://x.com/mignano/status/2052774235685208080" target="_blank" rel="noopener noreferrer">Spotify product/startup angle; launch post with visible traction (90+ likes when first checked).</a><small>Good thread to watch for product/strategy discussion.</small></li>
 <li><strong>X / @laytoun</strong>: <a href="https://x.com/laytoun/status/2052440113502629939" target="_blank" rel="noopener noreferrer">Builder/team launch excitement: agents can create Personal Podcasts and save to Spotify.</a><small>Useful for launch context and replies from dev circle.</small></li>
@@ -84,8 +99,8 @@
       <section class="card"><h2>Hacker News</h2><ul><li><a href="https://news.ycombinator.com/item?id=11260879" target="_blank" rel="noopener noreferrer">Ask HN: What are you working on and why is it awesome? Please include URL</a> <small> points ·  comments</small></li>
 <li><a href="https://github.com/spotify/save-to-spotify" target="_blank" rel="noopener noreferrer">Spotify CLI</a> <small>3 points ·  comments</small></li></ul></section>
     </div>
-    <section class="card"><h2>Reddit chatter</h2><ul><li><strong>r/CLI</strong>: <a href="https://www.reddit.com/r/CLI/comments/1taernd/spotify_ceo_says_you_can_use_save_to_spotify_cli/" target="_blank" rel="noopener noreferrer">Spotify CEO says you can use Save to Spotify CLI to add personal podcasts to your Spotify library</a><small>u/LinkedInNews · 3 pts ·  comments · 2026-05-11 20:05 UTC · external: <a href="https://www.linkedin.com/posts/gustavsoderstrom_hey-this-one-is-for-all-you-early-adopters-ugcPost-7458204995394646017-X9w9/" target="_blank" rel="noopener noreferrer">source</a></small></li>
-<li><strong>r/openclaw</strong>: <a href="https://www.reddit.com/r/openclaw/comments/1t8e6ul/using_openclaw_i_automated_my_daily_briefing_into/" target="_blank" rel="noopener noreferrer">Using OpenClaw I automated my daily briefing into personal podcasts on Spotify</a><small>u/laytoun · 15 pts · 9 comments · 2026-05-09 19:03 UTC</small></li>
+    <section class="card"><h2>Reddit chatter</h2><ul><li><strong>r/CLI</strong>: <a href="https://www.reddit.com/r/CLI/comments/1taernd/spotify_ceo_says_you_can_use_save_to_spotify_cli/" target="_blank" rel="noopener noreferrer">Spotify CEO says you can use Save to Spotify CLI to add personal podcasts to your Spotify library</a><small>u/LinkedInNews · 7 pts ·  comments · 2026-05-11 20:05 UTC · external: <a href="https://www.linkedin.com/posts/gustavsoderstrom_hey-this-one-is-for-all-you-early-adopters-ugcPost-7458204995394646017-X9w9/" target="_blank" rel="noopener noreferrer">source</a></small></li>
+<li><strong>r/openclaw</strong>: <a href="https://www.reddit.com/r/openclaw/comments/1t8e6ul/using_openclaw_i_automated_my_daily_briefing_into/" target="_blank" rel="noopener noreferrer">Using OpenClaw I automated my daily briefing into personal podcasts on Spotify</a><small>u/laytoun · 13 pts · 9 comments · 2026-05-09 19:03 UTC</small></li>
 <li><strong>r/AIjp</strong>: <a href="https://www.reddit.com/r/AIjp/comments/1t6vu2d/spotifyai生成の音声コンテンツを保存できるcliツールsave_to_spotify公開/" target="_blank" rel="noopener noreferrer">Spotify、AI生成の音声コンテンツを保存できるCLIツール「Save to Spotify」公開 - ITmedia NEWS</a><small>u/shinot · 2 pts · 3 comments · 2026-05-08 03:08 UTC · external: <a href="https://www.itmedia.co.jp/news/articles/2605/08/news059.html" target="_blank" rel="noopener noreferrer">source</a></small></li>
 <li><strong>r/truespotify</strong>: <a href="https://www.reddit.com/r/truespotify/comments/1sjckxb/wheres_my_downloaded_songs/" target="_blank" rel="noopener noreferrer">Where&#x27;s my downloaded songs?</a><small>u/thapriince ·  pts · 1 comments · 2026-04-12 11:58 UTC</small></li></ul></section>
     

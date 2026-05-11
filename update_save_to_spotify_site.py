@@ -281,6 +281,8 @@ def collect_seen_items(news, gh, hn, reddit):
     if gh and gh.get("latest_open"):
         for i in gh["latest_open"]:
             items.append({"source": f"GitHub {i.get('kind')}", "title": i.get("title"), "url": i.get("url"), "meta": i.get("created_at")})
+    for i in CURATED_SOCIAL:
+        items.append({"source": i.get("source") or "Social", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "suppress_new": True})
     for i in hn:
         items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments"})
     for i in reddit:
@@ -299,6 +301,79 @@ def render_new_items(new_items, initialized: bool):
         f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{esc(i.get("meta") or "new")}</small></li>'
         for i in new_items
     ) + "</ul>"
+
+
+def is_social_source(source: str) -> bool:
+    s = (source or "").lower()
+    return s.startswith("x /") or s.startswith("r/") or s == "hacker news"
+
+
+def parse_iso_date(value: str):
+    if not value:
+        return None
+    try:
+        return dt.datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    except Exception:
+        return None
+
+
+def render_social_posts_chart(seen: dict, today: dt.date) -> str:
+    counts = {}
+    for item in seen.values():
+        if not is_social_source(item.get("source", "")):
+            continue
+        day = parse_iso_date(item.get("first_seen_at"))
+        if day:
+            counts[day] = counts.get(day, 0) + 1
+    if not counts:
+        return '<p class="empty">No social/community posts tracked yet.</p>'
+
+    start = min(counts)
+    end = max(max(counts), today)
+    days = []
+    d = start
+    while d <= end:
+        days.append(d)
+        d += dt.timedelta(days=1)
+    values = [counts.get(day, 0) for day in days]
+
+    width, height = 820, 240
+    left, right, top, bottom = 46, 18, 20, 42
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    max_y = max(values + [1])
+    y_ticks = sorted(set([0, max_y] + ([max_y // 2] if max_y > 1 else [])))
+
+    def x_at(i):
+        return left + (plot_w * i / max(1, len(days) - 1))
+
+    def y_at(v):
+        return top + plot_h - (plot_h * v / max_y)
+
+    points = " ".join(f"{x_at(i):.1f},{y_at(v):.1f}" for i, v in enumerate(values))
+    circles = "".join(
+        f'<circle cx="{x_at(i):.1f}" cy="{y_at(v):.1f}" r="4"><title>{esc(day.isoformat())}: {v} posts</title></circle>'
+        for i, (day, v) in enumerate(zip(days, values))
+    )
+    labels = "".join(
+        f'<text x="{x_at(i):.1f}" y="{height - 16}" text-anchor="middle">{esc(day.strftime("%m-%d"))}</text>'
+        for i, day in enumerate(days)
+    )
+    grid = "".join(
+        f'<g><line x1="{left}" x2="{width - right}" y1="{y_at(t):.1f}" y2="{y_at(t):.1f}" />'
+        f'<text x="{left - 10}" y="{y_at(t) + 4:.1f}" text-anchor="end">{t}</text></g>'
+        for t in y_ticks
+    )
+    total = sum(values)
+    return f'''<div class="chart-wrap" role="img" aria-label="Line chart of social and community posts first seen per day">
+      <svg class="line-chart" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
+        <g class="chart-grid">{grid}</g>
+        <polyline points="{points}" />
+        <g class="chart-points">{circles}</g>
+        <g class="chart-labels">{labels}</g>
+      </svg>
+      <small>{total} social/community posts tracked since {esc(start.isoformat())}. Counts are based on first-seen day for X, Hacker News, and Reddit items.</small>
+    </div>'''
 
 
 def render():
@@ -323,13 +398,14 @@ def main():
     seen = seen_state.setdefault("seen", {})
     current_items = collect_seen_items(news, gh, hn, reddit)
     initialized = bool(seen_state.get("initialized"))
-    new_items = [i for i in current_items if initialized and i["id"] not in seen]
+    new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
     for i in current_items:
         seen.setdefault(i["id"], {"source": i.get("source"), "title": i.get("title"), "url": i.get("url"), "first_seen_at": now_utc.isoformat()})
     seen_state["initialized"] = True
     seen_state["last_updated_at"] = now_utc.isoformat()
     save_seen_state(seen_state)
     new_items_html = render_new_items(new_items, initialized)
+    social_chart_html = render_social_posts_chart(seen, now_local.date())
 
     gh_summary = "GitHub stats unavailable"
     if gh:
@@ -416,6 +492,12 @@ def main():
     a:hover {{ color:white; text-decoration-color:var(--accent); }}
     small {{ display:block; color:var(--muted); margin-top:.2rem; font-size:.82rem; }}
     .bigstat {{ font-size:1.25rem; color:#d9fbe4; font-weight:700; }}
+    .chart-wrap {{ display:grid; gap:.5rem; overflow:hidden; }}
+    .line-chart {{ width:100%; height:auto; display:block; }}
+    .chart-grid line {{ stroke:var(--line); stroke-width:1; }}
+    .chart-grid text, .chart-labels text {{ fill:var(--muted); font-size:12px; }}
+    .line-chart polyline {{ fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; filter: drop-shadow(0 0 10px #1ed76055); }}
+    .chart-points circle {{ fill:var(--accent); stroke:#d9fbe4; stroke-width:2; }}
     .warn {{ border-color:#806b2a; }}
     .highlight {{ border-color:#1ed76088; box-shadow: 0 20px 90px #1ed76022; }}
     .empty {{ color:var(--muted); margin:0; }}
@@ -447,6 +529,7 @@ def main():
       <section class="card"><h2>GitHub repo pulse</h2><p class="bigstat">{esc(gh_summary)}</p><ul>{issues_html}</ul></section>
     </div>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
+    <section class="card"><h2>Social posts per day</h2>{social_chart_html}</section>
     <div class="grid">
       <section class="card"><h2>Social / community places to watch</h2><ul>{social_html}</ul></section>
       <section class="card"><h2>Hacker News</h2><ul>{hn_html}</ul></section>
