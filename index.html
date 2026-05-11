@@ -14,6 +14,10 @@
     .pill { border:1px solid var(--line); background:#ffffff0a; color:var(--muted); border-radius:999px; padding:.45rem .75rem; font-size:.9rem; }
     main { max-width:1120px; margin:auto; padding: 1rem clamp(1rem, 5vw, 4rem) 4rem; display:grid; gap:1rem; }
     .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; }
+    .social-columns { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:1rem; align-items:start; }
+    .social-column { border:1px solid var(--line); background:#ffffff08; border-radius:18px; padding:1rem; min-width:0; }
+    .social-column h3 { margin:0 0 .85rem; font-size:1rem; color:#d9fbe4; }
+    @media (max-width: 860px) { .social-columns { grid-template-columns: 1fr; } }
     .card { border:1px solid var(--line); background:var(--card); border-radius:24px; padding:1.2rem; box-shadow: 0 20px 80px #0005; backdrop-filter: blur(16px); }
     h2 { margin:.1rem 0 1rem; font-size:1.1rem; letter-spacing:-.02em; }
     ul { list-style:none; padding:0; margin:0; display:grid; gap:.85rem; }
@@ -39,8 +43,8 @@
     <h1>Save to Spotify chatter tracker</h1>
     <p class="lede">A lightweight hourly snapshot of where people are talking about Spotify’s beta CLI for saving AI-generated personal podcasts into Spotify.</p>
     <div class="meta">
-      <span class="pill">Last updated: 2026-05-11 22:49 CEST</span>
-      <span class="pill">UTC: 2026-05-11 20:49</span>
+      <span class="pill">Last updated: 2026-05-11 22:50 CEST</span>
+      <span class="pill">UTC: 2026-05-11 20:50</span>
       <span class="pill">Auto-refresh target: hourly</span>
     </div>
   </header>
@@ -99,18 +103,21 @@
       </svg>
       <small>9 social/community posts tracked since 2026-05-10. Counts are based on first-seen day for X, Hacker News, and Reddit items.</small>
     </div></section>
-    <div class="grid">
-      <section class="card"><h2>Social / community places to watch</h2><ul><li><strong>X / @mignano</strong>: <a href="https://x.com/mignano/status/2052774235685208080" target="_blank" rel="noopener noreferrer">Spotify product/startup angle; launch post with visible traction (90+ likes when first checked).</a><small>Good thread to watch for product/strategy discussion.</small></li>
+    <section class="card">
+      <h2>Social / community places to watch</h2>
+      <div class="social-columns">
+        <section class="social-column"><h3>X</h3><ul><li><strong>X / @mignano</strong>: <a href="https://x.com/mignano/status/2052774235685208080" target="_blank" rel="noopener noreferrer">Spotify product/startup angle; launch post with visible traction (90+ likes when first checked).</a><small>Good thread to watch for product/strategy discussion.</small></li>
 <li><strong>X / @laytoun</strong>: <a href="https://x.com/laytoun/status/2052440113502629939" target="_blank" rel="noopener noreferrer">Builder/team launch excitement: agents can create Personal Podcasts and save to Spotify.</a><small>Useful for launch context and replies from dev circle.</small></li>
 <li><strong>X / @saen_dev</strong>: <a href="https://x.com/saen_dev/status/2052995476987768920" target="_blank" rel="noopener noreferrer">Developer use-case chatter: AI-generated podcasts saved into Spotify library.</a><small>Shows agent/workflow interpretation.</small></li>
-<li><strong>X / @mediagazer</strong>: <a href="https://x.com/mediagazer/status/2052398317523378515" target="_blank" rel="noopener noreferrer">News syndication mention of Save to Spotify launch.</a><small>Useful for media pickup trail.</small></li>
-<li><strong>Hacker News</strong>: <a href="https://news.ycombinator.com/item?id=48062612" target="_blank" rel="noopener noreferrer">Spotify CLI submission; low discussion so far.</a><small>Initially 3 points / 0 comments; updated stats below when API finds it.</small></li></ul></section>
-      <section class="card"><h2>Hacker News</h2><ul><li><a href="https://github.com/spotify/save-to-spotify" target="_blank" rel="noopener noreferrer">Spotify CLI</a> <small>3 points ·  comments</small></li></ul></section>
-    </div>
-    <section class="card"><h2>Reddit chatter</h2><ul><li><strong>r/CLI</strong>: <a href="https://www.reddit.com/r/CLI/comments/1taernd/spotify_ceo_says_you_can_use_save_to_spotify_cli/" target="_blank" rel="noopener noreferrer">Spotify CEO says you can use Save to Spotify CLI to add personal podcasts to your Spotify library</a><small>u/LinkedInNews · 7 pts ·  comments · 2026-05-11 20:05 UTC · external: <a href="https://www.linkedin.com/posts/gustavsoderstrom_hey-this-one-is-for-all-you-early-adopters-ugcPost-7458204995394646017-X9w9/" target="_blank" rel="noopener noreferrer">source</a></small></li>
-<li><strong>r/openclaw</strong>: <a href="https://www.reddit.com/r/openclaw/comments/1t8e6ul/using_openclaw_i_automated_my_daily_briefing_into/" target="_blank" rel="noopener noreferrer">Using OpenClaw I automated my daily briefing into personal podcasts on Spotify</a><small>u/laytoun · 15 pts · 9 comments · 2026-05-09 19:03 UTC</small></li>
+<li><strong>X / @mediagazer</strong>: <a href="https://x.com/mediagazer/status/2052398317523378515" target="_blank" rel="noopener noreferrer">News syndication mention of Save to Spotify launch.</a><small>Useful for media pickup trail.</small></li></ul></section>
+        <section class="social-column"><h3>Reddit</h3><ul><li><strong>r/CLI</strong>: <a href="https://www.reddit.com/r/CLI/comments/1taernd/spotify_ceo_says_you_can_use_save_to_spotify_cli/" target="_blank" rel="noopener noreferrer">Spotify CEO says you can use Save to Spotify CLI to add personal podcasts to your Spotify library</a><small>u/LinkedInNews · 6 pts ·  comments · 2026-05-11 20:05 UTC · external: <a href="https://www.linkedin.com/posts/gustavsoderstrom_hey-this-one-is-for-all-you-early-adopters-ugcPost-7458204995394646017-X9w9/" target="_blank" rel="noopener noreferrer">source</a></small></li>
+<li><strong>r/openclaw</strong>: <a href="https://www.reddit.com/r/openclaw/comments/1t8e6ul/using_openclaw_i_automated_my_daily_briefing_into/" target="_blank" rel="noopener noreferrer">Using OpenClaw I automated my daily briefing into personal podcasts on Spotify</a><small>u/laytoun · 14 pts · 9 comments · 2026-05-09 19:03 UTC</small></li>
 <li><strong>r/AIjp</strong>: <a href="https://www.reddit.com/r/AIjp/comments/1t6vu2d/spotifyai生成の音声コンテンツを保存できるcliツールsave_to_spotify公開/" target="_blank" rel="noopener noreferrer">Spotify、AI生成の音声コンテンツを保存できるCLIツール「Save to Spotify」公開 - ITmedia NEWS</a><small>u/shinot · 2 pts · 3 comments · 2026-05-08 03:08 UTC · external: <a href="https://www.itmedia.co.jp/news/articles/2605/08/news059.html" target="_blank" rel="noopener noreferrer">source</a></small></li></ul></section>
-    <section class="card"><h2>Remove list</h2><p class="empty">2 URLs excluded from this snapshot. 2 previously tracked matches pruned this run.</p></section>
+        <section class="social-column"><h3>Other</h3><ul><li><strong>Hacker News</strong>: <a href="https://news.ycombinator.com/item?id=48062612" target="_blank" rel="noopener noreferrer">Spotify CLI submission; low discussion so far.</a><small>Initially 3 points / 0 comments; updated stats below when API finds it.</small></li>
+<li><strong>Hacker News</strong>: <a href="https://github.com/spotify/save-to-spotify" target="_blank" rel="noopener noreferrer">Spotify CLI</a> <small>3 points ·  comments</small></li></ul></section>
+      </div>
+    </section>
+    <section class="card"><h2>Remove list</h2><p class="empty">2 URLs excluded from this snapshot. 0 previously tracked matches pruned this run.</p></section>
     
   </main>
   <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, Hacker News Algolia API, tools/reddit_reader.py, plus curated social links found during the first sweep.</footer>

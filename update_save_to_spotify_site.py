@@ -519,20 +519,28 @@ def main():
         for i in news
     ) or "<li>No news items found this run.</li>"
 
-    hn_html = "\n".join(
-        f'<li>{link(i["url"], i["title"])} <small>{esc(i.get("points"))} points · {esc(i.get("comments"))} comments</small></li>'
-        for i in hn
-    ) or "<li>No Hacker News hits found this run.</li>"
+    x_items = [i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)]
+    other_social_items = [i for i in CURATED_SOCIAL if i not in x_items and not is_removed_url(i.get("url", ""), remove_urls)]
 
-    social_html = "\n".join(
+    x_html = "\n".join(
         f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
-        for i in CURATED_SOCIAL
-    )
+        for i in x_items
+    ) or "<li>No X posts tracked this run.</li>"
 
     reddit_html = "\n".join(
         f'<li><strong>{esc(i["subreddit"])}</strong>: {link(i["url"], i["title"])}<small>u/{esc(i["author"])} · {esc(i["score"])} pts · {esc(i["comments"])} comments · {esc(i["created"])}{(" · external: " + link(i["external_url"], "source")) if i.get("external_url") else ""}</small></li>'
         for i in reddit
     ) or "<li>No Reddit hits found this run.</li>"
+
+    other_html_parts = [
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
+        for i in other_social_items
+    ]
+    other_html_parts.extend(
+        f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{esc(i.get("points"))} points · {esc(i.get("comments"))} comments</small></li>'
+        for i in hn
+    )
+    other_html = "\n".join(other_html_parts) or "<li>No other community hits found this run.</li>"
 
     primary_html = "\n".join(
         f'<li><strong>{esc(src)}</strong>: {link(url, title)}</li>'
@@ -568,6 +576,10 @@ def main():
     .pill {{ border:1px solid var(--line); background:#ffffff0a; color:var(--muted); border-radius:999px; padding:.45rem .75rem; font-size:.9rem; }}
     main {{ max-width:1120px; margin:auto; padding: 1rem clamp(1rem, 5vw, 4rem) 4rem; display:grid; gap:1rem; }}
     .grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; }}
+    .social-columns {{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:1rem; align-items:start; }}
+    .social-column {{ border:1px solid var(--line); background:#ffffff08; border-radius:18px; padding:1rem; min-width:0; }}
+    .social-column h3 {{ margin:0 0 .85rem; font-size:1rem; color:#d9fbe4; }}
+    @media (max-width: 860px) {{ .social-columns {{ grid-template-columns: 1fr; }} }}
     .card {{ border:1px solid var(--line); background:var(--card); border-radius:24px; padding:1.2rem; box-shadow: 0 20px 80px #0005; backdrop-filter: blur(16px); }}
     h2 {{ margin:.1rem 0 1rem; font-size:1.1rem; letter-spacing:-.02em; }}
     ul {{ list-style:none; padding:0; margin:0; display:grid; gap:.85rem; }}
@@ -615,11 +627,14 @@ def main():
     <section class="card"><h2>GitHub stars per day</h2>{github_stars_chart_html}</section>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
     <section class="card"><h2>Social posts per day</h2>{social_chart_html}</section>
-    <div class="grid">
-      <section class="card"><h2>Social / community places to watch</h2><ul>{social_html}</ul></section>
-      <section class="card"><h2>Hacker News</h2><ul>{hn_html}</ul></section>
-    </div>
-    <section class="card"><h2>Reddit chatter</h2><ul>{reddit_html}</ul></section>
+    <section class="card">
+      <h2>Social / community places to watch</h2>
+      <div class="social-columns">
+        <section class="social-column"><h3>X</h3><ul>{x_html}</ul></section>
+        <section class="social-column"><h3>Reddit</h3><ul>{reddit_html}</ul></section>
+        <section class="social-column"><h3>Other</h3><ul>{other_html}</ul></section>
+      </div>
+    </section>
     <section class="card"><h2>Remove list</h2><p class="empty">{len(remove_urls)} URLs excluded from this snapshot. {pruned_count} previously tracked matches pruned this run.</p></section>
     {errors_html}
   </main>
