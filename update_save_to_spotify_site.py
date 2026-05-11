@@ -15,7 +15,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 REPO_OWNER = "nyx371"
-REPO_NAME = "nyx-site-2"
+REPO_NAME = "sts-snapshot"
 TRACKED_REPO = "spotify/save-to-spotify"
 REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_reader.py")
 SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
