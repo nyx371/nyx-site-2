@@ -175,11 +175,9 @@ def clawhub_stats():
             elif key:
                 stats[key] = text
             elif "lucide-history" in span:
+                # ClawHub currently renders install/current history values here,
+                # but those counters are not reliable for this snapshot.
                 history_seen += 1
-                if history_seen == 1:
-                    stats["installs_current"] = text.replace(" current", "")
-                else:
-                    stats["installs_all_time"] = text.replace(" all-time", "")
         return stats, None
     except Exception as e:
         return None, f"ClawHub stats fetch failed: {e!r}"
@@ -503,8 +501,6 @@ def main():
             f"{clawhub.get('versions', '?')} versions · v{clawhub.get('version') or '?'}"
         )
         clawhub_rows = [
-            ("Current installs", clawhub.get("installs_current")),
-            ("All-time installs", clawhub.get("installs_all_time")),
             ("Updated", clawhub.get("updated")),
             ("License", clawhub.get("license")),
         ]
