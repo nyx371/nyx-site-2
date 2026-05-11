@@ -21,6 +21,7 @@ REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_read
 SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 
 NEWS_QUERY = '"Save to Spotify" Spotify AI podcasts'
+CLAWHUB_URL = "https://clawhub.ai/spotify/save-to-spotify"
 
 CURATED_SOCIAL = [
     {
@@ -130,6 +131,57 @@ def github_stats():
     except Exception as e:
         return None, f"GitHub API failed: {e!r}"
 
+
+def _strip_html(text: str) -> str:
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return html.unescape(re.sub(r"\s+", " ", text).strip())
+
+
+def clawhub_stats():
+    """Fetch public ClawHub stats from the skill detail page.
+
+    ClawHub renders these server-side in the hero stats row, so parsing the
+    public HTML is enough and avoids depending on private/internal APIs.
+    """
+    labels = {
+        "lucide-star": "stars",
+        "lucide-download": "downloads",
+        "lucide-package": "versions",
+        "lucide-calendar": "updated",
+        "lucide-scale": "license",
+    }
+    try:
+        doc = fetch_bytes(CLAWHUB_URL).decode("utf-8", errors="replace")
+        title = _strip_html((re.search(r"<h1[^>]*>(.*?)</h1>", doc, re.S) or [None, "Save To Spotify"])[1])
+        version_match = re.search(r'class="plugin-version-badge"[^>]*>\s*v\s*<!-- -->\s*([^<]+)', doc)
+        row_match = re.search(r'<div class="skill-hero-stats-row">(.*?)</div>', doc, re.S)
+        if not row_match:
+            return None, "ClawHub stats row not found"
+        stats = {"url": CLAWHUB_URL, "title": title, "version": version_match.group(1).strip() if version_match else None}
+        history_seen = 0
+        for span in re.findall(r'<span class="stat">(.*?)</span>', row_match.group(1), re.S):
+            key = None
+            for icon_class, label in labels.items():
+                if icon_class in span:
+                    key = label
+                    break
+            text = _strip_html(span)
+            if key == "versions":
+                stats[key] = text.replace(" versions", "")
+            elif key == "updated":
+                stats[key] = text.replace("Updated ", "")
+            elif key:
+                stats[key] = text
+            elif "lucide-history" in span:
+                history_seen += 1
+                if history_seen == 1:
+                    stats["installs_current"] = text.replace(" current", "")
+                else:
+                    stats["installs_all_time"] = text.replace(" all-time", "")
+        return stats, None
+    except Exception as e:
+        return None, f"ClawHub stats fetch failed: {e!r}"
 
 
 def reddit_hits(limit: int = 8):
@@ -262,9 +314,10 @@ def main():
 
     news, news_err = google_news_items()
     gh, gh_err = github_stats()
+    clawhub, clawhub_err = clawhub_stats()
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
-    errors = [e for e in [news_err, gh_err, hn_err, reddit_err] if e]
+    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
@@ -281,6 +334,25 @@ def main():
     gh_summary = "GitHub stats unavailable"
     if gh:
         gh_summary = f"{gh['stars']} stars · {gh['forks']} forks · {gh['open_issues']} open issues/PRs · updated {esc(gh['updated_at'])}"
+
+    clawhub_summary = "ClawHub stats unavailable"
+    clawhub_html = "<li>No ClawHub stats found this run.</li>"
+    if clawhub:
+        clawhub_summary = (
+            f"{clawhub.get('stars', '?')} stars · {clawhub.get('downloads', '?')} downloads · "
+            f"{clawhub.get('versions', '?')} versions · v{clawhub.get('version') or '?'}"
+        )
+        clawhub_rows = [
+            ("Current installs", clawhub.get("installs_current")),
+            ("All-time installs", clawhub.get("installs_all_time")),
+            ("Updated", clawhub.get("updated")),
+            ("License", clawhub.get("license")),
+        ]
+        clawhub_html = "\n".join(
+            f"<li><strong>{esc(label)}</strong><small>{esc(value)}</small></li>"
+            for label, value in clawhub_rows
+            if value is not None
+        ) or clawhub_html
 
     news_html = "\n".join(
         f'<li><strong>{esc(i["source"] or "News")}</strong>: {link(i["url"], i["title"])}<small>{esc(i["published"])}</small></li>'
@@ -367,10 +439,11 @@ def main():
     </section>
     <section class="card">
       <h2>Current read</h2>
-      <p class="bigstat">Conversation is mostly press + Spotify/dev X + GitHub, with Reddit tracked directly via the local reader. Seen posts are persisted so fresh items appear first.</p>
+      <p class="bigstat">Conversation is mostly press + Spotify/dev X + GitHub, with ClawHub install/download stats and Reddit tracked directly. Seen posts are persisted so fresh items appear first.</p>
     </section>
     <div class="grid">
       <section class="card"><h2>Primary links</h2><ul>{primary_html}</ul></section>
+      <section class="card"><h2>ClawHub skill stats</h2><p class="bigstat">{esc(clawhub_summary)}</p><ul>{clawhub_html}</ul><small>{link(CLAWHUB_URL, "Source: ClawHub skill page")}</small></section>
       <section class="card"><h2>GitHub repo pulse</h2><p class="bigstat">{esc(gh_summary)}</p><ul>{issues_html}</ul></section>
     </div>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
@@ -381,7 +454,7 @@ def main():
     <section class="card"><h2>Reddit chatter</h2><ul>{reddit_html}</ul></section>
     {errors_html}
   </main>
-  <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, Hacker News Algolia API, tools/reddit_reader.py, plus curated social links found during the first sweep.</footer>
+  <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, Hacker News Algolia API, tools/reddit_reader.py, plus curated social links found during the first sweep.</footer>
 </body>
 </html>
 """
