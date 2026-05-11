@@ -1,6 +1,6 @@
 {
   "initialized": true,
-  "last_updated_at": "2026-05-11T16:06:34.561627+00:00",
+  "last_updated_at": "2026-05-11T17:07:41.334030+00:00",
   "seen": {
     "04debc8f57af90b84376518dad6342ce37ac6e9e": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
@@ -145,6 +145,12 @@
       "source": "GitHub Issue",
       "title": "Running install script from 3rd party website",
       "url": "https://github.com/spotify/save-to-spotify/issues/18"
+    },
+    "e81fd1280f70295205a18c47d76c36d2eebd639d": {
+      "first_seen_at": "2026-05-11T17:07:41.334030+00:00",
+      "source": "GitHub PR",
+      "title": "Document ClawHub install",
+      "url": "https://github.com/spotify/save-to-spotify/pull/20"
     },
     "ef308b9291be1002ef6e3ec557fbb7cf7dd30761": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
