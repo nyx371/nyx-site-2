@@ -317,42 +317,41 @@ def parse_iso_date(value: str):
         return None
 
 
-def render_social_posts_chart(seen: dict, today: dt.date) -> str:
-    counts = {}
-    for item in seen.values():
-        if not is_social_source(item.get("source", "")):
-            continue
-        day = parse_iso_date(item.get("first_seen_at"))
-        if day:
-            counts[day] = counts.get(day, 0) + 1
-    if not counts:
-        return '<p class="empty">No social/community posts tracked yet.</p>'
+def render_line_chart(series: dict, today: dt.date, empty_text: str, aria_label: str, note: str, value_label: str) -> str:
+    dated = {day: value for day, value in series.items() if day and value is not None}
+    if not dated:
+        return f'<p class="empty">{esc(empty_text)}</p>'
 
-    start = min(counts)
-    end = max(max(counts), today)
+    start = min(dated)
+    end = max(max(dated), today)
     days = []
     d = start
     while d <= end:
         days.append(d)
         d += dt.timedelta(days=1)
-    values = [counts.get(day, 0) for day in days]
+    values = [dated.get(day, 0) for day in days]
 
     width, height = 820, 240
     left, right, top, bottom = 46, 18, 20, 42
     plot_w = width - left - right
     plot_h = height - top - bottom
     max_y = max(values + [1])
-    y_ticks = sorted(set([0, max_y] + ([max_y // 2] if max_y > 1 else [])))
+    min_y = min(values + [0])
+    if min_y > 0 and max_y - min_y <= 10:
+        min_y = max(0, min_y - 1)
+    span_y = max(1, max_y - min_y)
+    mid_y = min_y + span_y // 2
+    y_ticks = sorted(set([min_y, mid_y, max_y]))
 
     def x_at(i):
         return left + (plot_w * i / max(1, len(days) - 1))
 
     def y_at(v):
-        return top + plot_h - (plot_h * v / max_y)
+        return top + plot_h - (plot_h * (v - min_y) / span_y)
 
     points = " ".join(f"{x_at(i):.1f},{y_at(v):.1f}" for i, v in enumerate(values))
     circles = "".join(
-        f'<circle cx="{x_at(i):.1f}" cy="{y_at(v):.1f}" r="4"><title>{esc(day.isoformat())}: {v} posts</title></circle>'
+        f'<circle cx="{x_at(i):.1f}" cy="{y_at(v):.1f}" r="4"><title>{esc(day.isoformat())}: {v} {esc(value_label)}</title></circle>'
         for i, (day, v) in enumerate(zip(days, values))
     )
     labels = "".join(
@@ -364,16 +363,52 @@ def render_social_posts_chart(seen: dict, today: dt.date) -> str:
         f'<text x="{left - 10}" y="{y_at(t) + 4:.1f}" text-anchor="end">{t}</text></g>'
         for t in y_ticks
     )
-    total = sum(values)
-    return f'''<div class="chart-wrap" role="img" aria-label="Line chart of social and community posts first seen per day">
+    return f'''<div class="chart-wrap" role="img" aria-label="{esc(aria_label)}">
       <svg class="line-chart" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
         <g class="chart-grid">{grid}</g>
         <polyline points="{points}" />
         <g class="chart-points">{circles}</g>
         <g class="chart-labels">{labels}</g>
       </svg>
-      <small>{total} social/community posts tracked since {esc(start.isoformat())}. Counts are based on first-seen day for X, Hacker News, and Reddit items.</small>
+      <small>{note}</small>
     </div>'''
+
+
+def render_social_posts_chart(seen: dict, today: dt.date) -> str:
+    counts = {}
+    for item in seen.values():
+        if not is_social_source(item.get("source", "")):
+            continue
+        day = parse_iso_date(item.get("first_seen_at"))
+        if day:
+            counts[day] = counts.get(day, 0) + 1
+    if counts:
+        note = f'{sum(counts.values())} social/community posts tracked since {esc(min(counts).isoformat())}. Counts are based on first-seen day for X, Hacker News, and Reddit items.'
+    else:
+        note = ""
+    return render_line_chart(counts, today, "No social/community posts tracked yet.", "Line chart of social and community posts first seen per day", note, "posts")
+
+
+def update_github_star_history(state: dict, gh: dict | None, today: dt.date):
+    history = state.setdefault("github_stars_by_day", {})
+    if gh and gh.get("stars") is not None:
+        history[today.isoformat()] = int(gh["stars"])
+    return history
+
+
+def render_github_stars_chart(history: dict, today: dt.date) -> str:
+    series = {}
+    for day, stars in (history or {}).items():
+        try:
+            series[dt.date.fromisoformat(day)] = int(stars)
+        except Exception:
+            continue
+    if series:
+        latest_day = max(series)
+        note = f'GitHub stars tracked daily starting {esc(min(series).isoformat())}. Latest: {series[latest_day]} stars on {esc(latest_day.isoformat())}.'
+    else:
+        note = ""
+    return render_line_chart(series, today, "No GitHub star history recorded yet.", "Line chart of GitHub stars per day", note, "stars")
 
 
 def render():
@@ -403,9 +438,11 @@ def main():
         seen.setdefault(i["id"], {"source": i.get("source"), "title": i.get("title"), "url": i.get("url"), "first_seen_at": now_utc.isoformat()})
     seen_state["initialized"] = True
     seen_state["last_updated_at"] = now_utc.isoformat()
+    github_star_history = update_github_star_history(seen_state, gh, now_local.date())
     save_seen_state(seen_state)
     new_items_html = render_new_items(new_items, initialized)
     social_chart_html = render_social_posts_chart(seen, now_local.date())
+    github_stars_chart_html = render_github_stars_chart(github_star_history, now_local.date())
 
     gh_summary = "GitHub stats unavailable"
     if gh:
@@ -528,6 +565,7 @@ def main():
       <section class="card"><h2>ClawHub skill stats</h2><p class="bigstat">{esc(clawhub_summary)}</p><ul>{clawhub_html}</ul><small>{link(CLAWHUB_URL, "Source: ClawHub skill page")}</small></section>
       <section class="card"><h2>GitHub repo pulse</h2><p class="bigstat">{esc(gh_summary)}</p><ul>{issues_html}</ul></section>
     </div>
+    <section class="card"><h2>GitHub stars per day</h2>{github_stars_chart_html}</section>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
     <section class="card"><h2>Social posts per day</h2>{social_chart_html}</section>
     <div class="grid">
