@@ -142,42 +142,50 @@ def _strip_html(text: str) -> str:
 def clawhub_stats():
     """Fetch public ClawHub stats from the skill detail page.
 
-    ClawHub renders these server-side in the hero stats row, so parsing the
-    public HTML is enough and avoids depending on private/internal APIs.
+    ClawHub changed from a hero stats row to sidebar/actions markup. Prefer the
+    server-rendered data blob, then fall back to visible sidebar/action labels.
     """
-    labels = {
-        "lucide-star": "stars",
-        "lucide-download": "downloads",
-        "lucide-package": "versions",
-        "lucide-calendar": "updated",
-        "lucide-scale": "license",
-    }
     try:
         doc = fetch_bytes(CLAWHUB_URL).decode("utf-8", errors="replace")
         title = _strip_html((re.search(r"<h1[^>]*>(.*?)</h1>", doc, re.S) or [None, "Save To Spotify"])[1])
-        version_match = re.search(r'class="plugin-version-badge"[^>]*>\s*v\s*<!-- -->\s*([^<]+)', doc)
-        row_match = re.search(r'<div class="skill-hero-stats-row">(.*?)</div>', doc, re.S)
-        if not row_match:
-            return None, "ClawHub stats row not found"
-        stats = {"url": CLAWHUB_URL, "title": title, "version": version_match.group(1).strip() if version_match else None}
-        history_seen = 0
-        for span in re.findall(r'<span class="stat">(.*?)</span>', row_match.group(1), re.S):
-            key = None
-            for icon_class, label in labels.items():
-                if icon_class in span:
-                    key = label
-                    break
-            text = _strip_html(span)
-            if key == "versions":
-                stats[key] = text.replace(" versions", "")
-            elif key == "updated":
-                stats[key] = text.replace("Updated ", "")
-            elif key:
-                stats[key] = text
-            elif "lucide-history" in span:
-                # ClawHub currently renders install/current history values here,
-                # but those counters are not reliable for this snapshot.
-                history_seen += 1
+        stats = {"url": CLAWHUB_URL, "title": title}
+
+        data_match = re.search(r"stats:\$R\[\d+\]=\{([^}]+)\}", doc)
+        if data_match:
+            for key, value in re.findall(r"(stars|downloads|versions):([0-9]+)", data_match.group(1)):
+                stats[key] = value
+
+        version_match = re.search(r"version=([0-9][^&\"]+)", doc)
+        if not version_match:
+            version_match = re.search(r'<dt class="sidebar-metadata-label">Current version</dt>\s*<dd class="sidebar-metadata-value">v?([^<]+)</dd>', doc, re.S)
+        if version_match:
+            stats["version"] = html.unescape(version_match.group(1)).strip()
+
+        license_match = re.search(r'<dt class="sidebar-metadata-label">License</dt>\s*<dd class="sidebar-metadata-value">([^<]+)</dd>', doc, re.S)
+        if license_match:
+            stats["license"] = _strip_html(license_match.group(1))
+
+        updated_match = re.search(r'<dt class="sidebar-metadata-label">Last updated</dt>\s*<dd class="sidebar-metadata-value">([^<]+)</dd>', doc, re.S)
+        if updated_match:
+            stats["updated"] = _strip_html(updated_match.group(1))
+
+        # Fallbacks for values shown in action buttons if the data blob moves.
+        if "stars" not in stats:
+            star_match = re.search(r'aria-label="Star skill"[^>]*>.*?<span class="skill-action-count">([^<]+)</span>', doc, re.S)
+            if star_match:
+                stats["stars"] = _strip_html(star_match.group(1))
+        if "downloads" not in stats:
+            download_match = re.search(r'Download zip</a>.*?<span class="skill-action-count">([^<]+)</span>', doc, re.S)
+            if download_match:
+                stats["downloads"] = _strip_html(download_match.group(1))
+        if "versions" not in stats:
+            versions_match = re.search(r'<dt class="sidebar-metadata-label">Versions</dt>\s*<dd class="sidebar-metadata-value">([^<]+)</dd>', doc, re.S)
+            if versions_match:
+                stats["versions"] = _strip_html(versions_match.group(1))
+
+        required = {"stars", "downloads", "versions"}
+        if not required.intersection(stats):
+            return None, "ClawHub stats not found in current page markup"
         return stats, None
     except Exception as e:
         return None, f"ClawHub stats fetch failed: {e!r}"
