@@ -560,19 +560,20 @@ def save_seen_state(state):
 def collect_seen_items(news, gh, hn, reddit, youtube, remove_urls: set[str]):
     items = []
     for i in news:
-        items.append({"source": i.get("source") or "News", "title": i.get("title"), "url": i.get("url"), "meta": i.get("published")})
+        items.append({"source": i.get("source") or "News", "title": i.get("title"), "url": i.get("url"), "meta": i.get("published"), "published_at": i.get("published")})
     if gh and gh.get("latest_open"):
         for i in gh["latest_open"]:
             items.append({"source": f"GitHub {i.get('kind')}", "title": i.get("title"), "url": i.get("url"), "meta": i.get("created_at")})
     for i in CURATED_SOCIAL:
-        items.append({"source": i.get("source") or "Social", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "suppress_new": True})
+        published_at = x_status_datetime(i.get("url", ""))
+        items.append({"source": i.get("source") or "Social", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "published_at": published_at.isoformat() if published_at else None, "suppress_new": True})
     for i in hn:
-        items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments"})
+        items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments", "published_at": i.get("created_at")})
     for i in reddit:
-        items.append({"source": i.get("subreddit") or "Reddit", "title": i.get("title"), "url": i.get("url"), "meta": f"u/{i.get('author')} · {i.get('score')} pts · {i.get('comments')} comments"})
+        items.append({"source": i.get("subreddit") or "Reddit", "title": i.get("title"), "url": i.get("url"), "meta": f"u/{i.get('author')} · {i.get('score')} pts · {i.get('comments')} comments", "published_at": i.get("created_at") or i.get("created")})
     for i in youtube:
         meta = " · ".join(part for part in [i.get("channel"), i.get("published"), i.get("views"), i.get("duration")] if part)
-        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta})
+        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta, "published_at": i.get("published")})
     items = [item for item in items if not is_removed_url(item.get("url", ""), remove_urls)]
     for item in items:
         item["id"] = item_key(item.get("source", ""), item.get("title", ""), item.get("url", ""))
@@ -600,6 +601,15 @@ def render_new_items(new_items, initialized: bool, now_utc: dt.datetime):
 def is_social_source(source: str) -> bool:
     s = (source or "").lower()
     return s.startswith("x /") or s.startswith("r/") or s == "hacker news" or s == "youtube"
+
+
+def is_media_source(source: str) -> bool:
+    s = (source or "").lower()
+    return not (is_social_source(s) or s.startswith("github "))
+
+
+def is_social_or_media_source(source: str) -> bool:
+    return is_social_source(source) or is_media_source(source)
 
 
 def parse_iso_date(value: str):
@@ -668,20 +678,37 @@ def render_line_chart(series: dict, today: dt.date, empty_text: str, aria_label:
     </div>'''
 
 
+def social_or_media_item_day(item: dict, now_utc: dt.datetime):
+    source = item.get("source", "")
+    candidates = [item.get("published_at")]
+    if is_media_source(source):
+        candidates.extend([item.get("meta"), item.get("first_seen_at")])
+    else:
+        candidates.extend([item.get("first_seen_at")])
+    for value in candidates:
+        parsed = parse_datetime_value(value, now_utc)
+        if parsed:
+            return parsed.astimezone(dt.timezone.utc).date()
+    parsed = x_status_datetime(item.get("url", ""))
+    if parsed:
+        return parsed.date()
+    return None
+
+
 def render_social_posts_chart(seen: dict, today: dt.date, now_utc: dt.datetime) -> str:
     counts = {}
     for item in seen.values():
-        if not is_social_source(item.get("source", "")):
+        if not is_social_or_media_source(item.get("source", "")):
             continue
-        day = parse_iso_date(item.get("first_seen_at"))
+        day = social_or_media_item_day(item, now_utc)
         if day:
             counts[day] = counts.get(day, 0) + 1
 
     if counts:
-        note = f'{sum(counts.values())} social/community posts tracked since {time_html(min(counts).isoformat(), now_utc)}. Counts are per first-seen day for X, YouTube, Hacker News, and Reddit items.'
+        note = f'{sum(counts.values())} social/media posts tracked since {time_html(min(counts).isoformat(), now_utc)}. Counts include news/media plus X, YouTube, Hacker News, and Reddit, plotted by publish/post date when available.'
     else:
         note = ""
-    return render_line_chart(counts, today, "No social/community posts tracked yet.", "Line chart of social and community posts first seen per day", note, "posts")
+    return render_line_chart(counts, today, "No social/media posts tracked yet.", "Line chart of social and media posts by day across the full timeline", note, "posts")
 
 
 def update_github_star_history(state: dict, gh: dict | None, today: dt.date):
@@ -745,6 +772,7 @@ def main():
             "title": i.get("title"),
             "url": i.get("url"),
             "meta": i.get("meta"),
+            "published_at": i.get("published_at"),
             "last_seen_at": now_utc.isoformat(),
         })
     seen_state["initialized"] = True
@@ -900,7 +928,7 @@ def main():
     </div>
     <section class="card"><h2>GitHub stars per day</h2>{github_stars_chart_html}</section>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
-    <section class="card"><h2>Social posts per day</h2>{social_chart_html}</section>
+    <section class="card"><h2>Social + media posts per day</h2>{social_chart_html}</section>
     <section class="card">
       <h2>Social / community places to watch</h2>
       <div class="social-columns">
