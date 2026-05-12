@@ -431,6 +431,43 @@ def render_line_chart(series: dict, today: dt.date, empty_text: str, aria_label:
     </div>'''
 
 
+def social_item_sort_key(item: dict) -> str:
+    return str(item.get("first_seen_at") or item.get("meta") or "")
+
+
+def render_seen_social_item(item: dict, meta: str | None = None) -> str:
+    first_seen = item.get("first_seen_at")
+    if first_seen:
+        try:
+            first_seen = dt.datetime.fromisoformat(first_seen.replace("Z", "+00:00")).strftime("first seen %Y-%m-%d")
+        except Exception:
+            first_seen = f"first seen {first_seen}"
+    detail = " · ".join(part for part in [meta, first_seen] if part)
+    return f'<li><strong>{esc(item.get("source") or "Social")}</strong>: {link(item.get("url") or "#", item.get("title") or "Untitled")}<small>{esc(detail or "tracked")}</small></li>'
+
+
+def cumulative_social_groups(seen: dict, remove_urls: set[str]):
+    curated_meta_by_url = {normalize_url(i.get("url", "")): i.get("note") for i in CURATED_SOCIAL}
+    groups = {"x": [], "reddit": [], "other": []}
+    for item in seen.values():
+        source = item.get("source", "")
+        if not is_social_source(source):
+            continue
+        if is_removed_url(item.get("url", ""), remove_urls):
+            continue
+        source_l = source.lower()
+        item = dict(item)
+        item["meta"] = curated_meta_by_url.get(normalize_url(item.get("url", "")), item.get("meta"))
+        if source_l.startswith("x /"):
+            groups["x"].append(item)
+        elif source_l.startswith("r/"):
+            groups["reddit"].append(item)
+        else:
+            groups["other"].append(item)
+    for key in groups:
+        groups[key].sort(key=social_item_sort_key, reverse=True)
+    return groups
+
 def render_social_posts_chart(seen: dict, today: dt.date) -> str:
     counts = {}
     for item in seen.values():
@@ -497,7 +534,14 @@ def main():
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
     for i in current_items:
-        seen.setdefault(i["id"], {"source": i.get("source"), "title": i.get("title"), "url": i.get("url"), "first_seen_at": now_utc.isoformat()})
+        stored = seen.setdefault(i["id"], {"first_seen_at": now_utc.isoformat()})
+        stored.update({
+            "source": i.get("source"),
+            "title": i.get("title"),
+            "url": i.get("url"),
+            "meta": i.get("meta"),
+            "last_seen_at": now_utc.isoformat(),
+        })
     seen_state["initialized"] = True
     seen_state["last_updated_at"] = now_utc.isoformat()
     github_star_history = update_github_star_history(seen_state, gh, now_local.date())
@@ -531,28 +575,10 @@ def main():
         for i in news
     ) or "<li>No news items found this run.</li>"
 
-    x_items = [i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)]
-    other_social_items = [i for i in CURATED_SOCIAL if i not in x_items and not is_removed_url(i.get("url", ""), remove_urls)]
-
-    x_html = "\n".join(
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
-        for i in x_items
-    ) or "<li>No X posts tracked this run.</li>"
-
-    reddit_html = "\n".join(
-        f'<li><strong>{esc(i["subreddit"])}</strong>: {link(i["url"], i["title"])}<small>u/{esc(i["author"])} · {esc(i["score"])} pts · {esc(i["comments"])} comments · {esc(i["created"])}{(" · external: " + link(i["external_url"], "source")) if i.get("external_url") else ""}</small></li>'
-        for i in reddit
-    ) or "<li>No Reddit hits found this run.</li>"
-
-    other_html_parts = [
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
-        for i in other_social_items
-    ]
-    other_html_parts.extend(
-        f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{esc(i.get("points"))} points · {esc(i.get("comments"))} comments</small></li>'
-        for i in hn
-    )
-    other_html = "\n".join(other_html_parts) or "<li>No other community hits found this run.</li>"
+    social_groups = cumulative_social_groups(seen, remove_urls)
+    x_html = "\n".join(render_seen_social_item(i, i.get("meta")) for i in social_groups["x"]) or "<li>No X posts tracked yet.</li>"
+    reddit_html = "\n".join(render_seen_social_item(i, i.get("meta")) for i in social_groups["reddit"]) or "<li>No Reddit hits tracked yet.</li>"
+    other_html = "\n".join(render_seen_social_item(i, i.get("meta")) for i in social_groups["other"]) or "<li>No other community hits tracked yet.</li>"
 
     primary_html = "\n".join(
         f'<li><strong>{esc(src)}</strong>: {link(url, title)}</li>'
@@ -633,7 +659,7 @@ def main():
     </section>
     <section class="card">
       <h2>Current read</h2>
-      <p class="bigstat">Conversation is mostly press + Spotify/dev X + GitHub, with ClawHub install/download stats and Reddit tracked directly. Seen posts are persisted so fresh items appear first.</p>
+      <p class="bigstat">Conversation is mostly press + Spotify/dev X + GitHub, with ClawHub install/download stats and Reddit tracked directly. Seen social/community posts are cumulative, so older finds stay visible while fresh items appear first.</p>
     </section>
     <div class="grid">
       <section class="card"><h2>Primary links</h2><ul>{primary_html}</ul></section>
@@ -644,7 +670,7 @@ def main():
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
     <section class="card"><h2>Social posts per day</h2>{social_chart_html}</section>
     <section class="card">
-      <h2>Social / community places to watch</h2>
+      <h2>Cumulative social / community places to watch</h2>
       <div class="social-columns">
         <section class="social-column"><h3>X</h3><ul>{x_html}</ul></section>
         <section class="social-column"><h3>Reddit</h3><ul>{reddit_html}</ul></section>
