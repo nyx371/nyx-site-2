@@ -22,6 +22,7 @@ SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
 
 NEWS_QUERY = '"Save to Spotify" Spotify AI podcasts'
+YOUTUBE_QUERY = 'Spotify "Personal Podcasts" "AI agents"'
 CLAWHUB_URL = "https://clawhub.ai/spotify/save-to-spotify"
 
 CURATED_SOCIAL = [
@@ -235,6 +236,104 @@ def reddit_hits(limit: int = 8):
     except BaseException as e:
         return [], f"Reddit reader failed: {e!r}"
 
+
+def _extract_yt_initial_data(doc: str):
+    marker = "var ytInitialData = "
+    start = doc.find(marker)
+    if start == -1:
+        marker = "ytInitialData = "
+        start = doc.find(marker)
+    if start == -1:
+        return None
+    start = doc.find("{", start)
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escape = False
+    for idx in range(start, len(doc)):
+        ch = doc[idx]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return json.loads(doc[start:idx + 1])
+    return None
+
+
+def _yt_text(value) -> str:
+    if not value:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        if value.get("simpleText"):
+            return str(value["simpleText"])
+        runs = value.get("runs") or []
+        return "".join(str(run.get("text") or "") for run in runs)
+    return ""
+
+
+def _walk_dicts(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from _walk_dicts(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _walk_dicts(child)
+
+
+def youtube_hits(limit: int = 8):
+    """Fetch YouTube search results from the public search page (no API key)."""
+    q = urllib.parse.quote(YOUTUBE_QUERY)
+    url = f"https://www.youtube.com/results?search_query={q}&sp=CAI%253D"
+    try:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (compatible; nyx-save-to-spotify-tracker/1.0)",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+        with urllib.request.urlopen(req, timeout=20) as r:
+            doc = r.read().decode("utf-8", errors="replace")
+        data = _extract_yt_initial_data(doc)
+        if not data:
+            return [], "YouTube search markup did not include ytInitialData"
+        out = []
+        seen_video_ids = set()
+        for node in _walk_dicts(data):
+            video = node.get("videoRenderer") if isinstance(node, dict) else None
+            if not video:
+                continue
+            video_id = video.get("videoId")
+            title = _yt_text(video.get("title")) or "Untitled video"
+            if not video_id or video_id in seen_video_ids:
+                continue
+            seen_video_ids.add(video_id)
+            out.append({
+                "title": title,
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "channel": _yt_text(video.get("ownerText")) or _yt_text(video.get("longBylineText")) or "YouTube",
+                "published": _yt_text(video.get("publishedTimeText")),
+                "views": _yt_text(video.get("viewCountText")),
+                "duration": _yt_text(video.get("lengthText")),
+            })
+            if len(out) >= limit:
+                break
+        return out, None
+    except Exception as e:
+        return [], f"YouTube search failed: {e!r}"
+
 def hn_hits():
     try:
         q = urllib.parse.quote('"Save to Spotify"')
@@ -323,7 +422,7 @@ def save_seen_state(state):
     SEEN_STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def collect_seen_items(news, gh, hn, reddit, remove_urls: set[str]):
+def collect_seen_items(news, gh, hn, reddit, youtube, remove_urls: set[str]):
     items = []
     for i in news:
         items.append({"source": i.get("source") or "News", "title": i.get("title"), "url": i.get("url"), "meta": i.get("published")})
@@ -336,6 +435,9 @@ def collect_seen_items(news, gh, hn, reddit, remove_urls: set[str]):
         items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments"})
     for i in reddit:
         items.append({"source": i.get("subreddit") or "Reddit", "title": i.get("title"), "url": i.get("url"), "meta": f"u/{i.get('author')} · {i.get('score')} pts · {i.get('comments')} comments"})
+    for i in youtube:
+        meta = " · ".join(part for part in [i.get("channel"), i.get("published"), i.get("views"), i.get("duration")] if part)
+        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta})
     items = [item for item in items if not is_removed_url(item.get("url", ""), remove_urls)]
     for item in items:
         item["id"] = item_key(item.get("source", ""), item.get("title", ""), item.get("url", ""))
@@ -362,7 +464,7 @@ def render_new_items(new_items, initialized: bool):
 
 def is_social_source(source: str) -> bool:
     s = (source or "").lower()
-    return s.startswith("x /") or s.startswith("r/") or s == "hacker news"
+    return s.startswith("x /") or s.startswith("r/") or s == "hacker news" or s == "youtube"
 
 
 def parse_iso_date(value: str):
@@ -451,7 +553,7 @@ def render_social_posts_chart(seen: dict, today: dt.date) -> str:
 
     if cumulative_counts:
         latest_day = max(cumulative_counts)
-        note = f'{cumulative_counts[latest_day]} cumulative social/community posts tracked since {esc(min(cumulative_counts).isoformat())}. Counts are cumulative by first-seen day for X, Hacker News, and Reddit items.'
+        note = f'{cumulative_counts[latest_day]} cumulative social/community posts tracked since {esc(min(cumulative_counts).isoformat())}. Counts are cumulative by first-seen day for X, YouTube, Hacker News, and Reddit items.'
     else:
         note = ""
     return render_line_chart(cumulative_counts, today, "No social/community posts tracked yet.", "Line chart of cumulative social and community posts tracked over time", note, "posts")
@@ -496,15 +598,17 @@ def main():
     clawhub, clawhub_err = clawhub_stats()
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
+    youtube, youtube_err = youtube_hits()
     news = [i for i in news if not is_removed_url(i.get("url", ""), remove_urls)]
     hn = [i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)]
     reddit = [i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)]
-    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err] if e]
+    youtube = [i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)]
+    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
     pruned_count = prune_removed_seen(seen, remove_urls)
-    current_items = collect_seen_items(news, gh, hn, reddit, remove_urls)
+    current_items = collect_seen_items(news, gh, hn, reddit, youtube, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
     for i in current_items:
@@ -562,6 +666,11 @@ def main():
         for i in reddit
     ) or "<li>No Reddit hits found this run.</li>"
 
+    youtube_html = "\n".join(
+        f'<li><strong>{esc(i.get("channel") or "YouTube")}</strong>: {link(i["url"], i["title"])}<small>{esc(" · ".join(part for part in [i.get("published"), i.get("views"), i.get("duration")] if part))}</small></li>'
+        for i in youtube
+    ) or "<li>No YouTube videos found this run.</li>"
+
     other_html_parts = [
         f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
         for i in other_social_items
@@ -606,7 +715,7 @@ def main():
     .pill {{ border:1px solid var(--line); background:#ffffff0a; color:var(--muted); border-radius:999px; padding:.45rem .75rem; font-size:.9rem; }}
     main {{ max-width:1120px; margin:auto; padding: 1rem clamp(1rem, 5vw, 4rem) 4rem; display:grid; gap:1rem; }}
     .grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; }}
-    .social-columns {{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:1rem; align-items:start; }}
+    .social-columns {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1rem; align-items:start; }}
     .social-column {{ border:1px solid var(--line); background:#ffffff08; border-radius:18px; padding:1rem; min-width:0; }}
     .social-column h3 {{ margin:0 0 .85rem; font-size:1rem; color:#d9fbe4; }}
     @media (max-width: 860px) {{ .social-columns {{ grid-template-columns: 1fr; }} }}
@@ -665,6 +774,7 @@ def main():
       <h2>Social / community places to watch</h2>
       <div class="social-columns">
         <section class="social-column"><h3>X</h3><ul>{x_html}</ul></section>
+        <section class="social-column"><h3>YouTube</h3><ul>{youtube_html}</ul></section>
         <section class="social-column"><h3>Reddit</h3><ul>{reddit_html}</ul></section>
         <section class="social-column"><h3>Other</h3><ul>{other_html}</ul></section>
       </div>
@@ -672,7 +782,7 @@ def main():
     <section class="card"><h2>Remove list</h2><p class="empty">{len(remove_urls)} URLs excluded from this snapshot. {pruned_count} previously tracked matches pruned this run.</p></section>
     {errors_html}
   </main>
-  <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, Hacker News Algolia API, tools/reddit_reader.py, plus curated social links found during the first sweep.</footer>
+  <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, YouTube search, Hacker News Algolia API, tools/reddit_reader.py, plus curated social links found during the first sweep.</footer>
 </body>
 </html>
 """
