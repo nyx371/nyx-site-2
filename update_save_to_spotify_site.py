@@ -669,29 +669,19 @@ def render_line_chart(series: dict, today: dt.date, empty_text: str, aria_label:
 
 
 def render_social_posts_chart(seen: dict, today: dt.date, now_utc: dt.datetime) -> str:
-    daily_counts = {}
+    counts = {}
     for item in seen.values():
         if not is_social_source(item.get("source", "")):
             continue
         day = parse_iso_date(item.get("first_seen_at"))
         if day:
-            daily_counts[day] = daily_counts.get(day, 0) + 1
+            counts[day] = counts.get(day, 0) + 1
 
-    cumulative_counts = {}
-    running_total = 0
-    if daily_counts:
-        day = min(daily_counts)
-        while day <= today:
-            running_total += daily_counts.get(day, 0)
-            cumulative_counts[day] = running_total
-            day += dt.timedelta(days=1)
-
-    if cumulative_counts:
-        latest_day = max(cumulative_counts)
-        note = f'{cumulative_counts[latest_day]} cumulative social/community posts tracked since {time_html(min(cumulative_counts).isoformat(), now_utc)}. Counts are cumulative by first-seen day for X, YouTube, Hacker News, and Reddit items.'
+    if counts:
+        note = f'{sum(counts.values())} social/community posts tracked since {time_html(min(counts).isoformat(), now_utc)}. Counts are per first-seen day for X, YouTube, Hacker News, and Reddit items.'
     else:
         note = ""
-    return render_line_chart(cumulative_counts, today, "No social/community posts tracked yet.", "Line chart of cumulative social and community posts tracked over time", note, "posts")
+    return render_line_chart(counts, today, "No social/community posts tracked yet.", "Line chart of social and community posts first seen per day", note, "posts")
 
 
 def update_github_star_history(state: dict, gh: dict | None, today: dt.date):
@@ -910,7 +900,7 @@ def main():
     </div>
     <section class="card"><h2>GitHub stars per day</h2>{github_stars_chart_html}</section>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
-    <section class="card"><h2>Cumulative social posts</h2>{social_chart_html}</section>
+    <section class="card"><h2>Social posts per day</h2>{social_chart_html}</section>
     <section class="card">
       <h2>Social / community places to watch</h2>
       <div class="social-columns">
