@@ -470,6 +470,33 @@ def meta_html(parts, now_utc: dt.datetime, date_indexes: set[int] | None = None)
     return " · ".join(rendered)
 
 
+def x_status_datetime(url: str):
+    match = re.search(r"(?:twitter|x)\.com/[^/]+/status/(\d+)", str(url or ""))
+    if not match:
+        return None
+    try:
+        # Twitter/X snowflake timestamp: milliseconds since 2010-11-04.
+        millis = (int(match.group(1)) >> 22) + 1288834974657
+        return dt.datetime.fromtimestamp(millis / 1000, dt.timezone.utc)
+    except Exception:
+        return None
+
+
+def recency_datetime(item: dict, now_utc: dt.datetime, *fields: str):
+    for field in fields:
+        parsed = parse_datetime_value(item.get(field), now_utc)
+        if parsed:
+            return parsed.astimezone(dt.timezone.utc)
+    parsed = x_status_datetime(item.get("url", ""))
+    if parsed:
+        return parsed
+    return dt.datetime.min.replace(tzinfo=dt.timezone.utc)
+
+
+def sort_by_recency(items, now_utc: dt.datetime, *fields: str):
+    return sorted(items, key=lambda item: recency_datetime(item, now_utc, *fields), reverse=True)
+
+
 def render_stat_grid(stats: list[tuple[str, object]]) -> str:
     items = [
         f'<div class="stat-box"><span>{esc(label)}</span><strong>{value if isinstance(value, str) and value.startswith("<time ") else esc(value)}</strong></div>'
@@ -566,7 +593,7 @@ def render_new_items(new_items, initialized: bool, now_utc: dt.datetime):
         return '<p class="empty">No new tracked posts since the previous update.</p>'
     return "<ul>" + "\n".join(
         f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{time_html(i.get("meta") or "new", now_utc)}</small></li>'
-        for i in new_items
+        for i in sort_by_recency(new_items, now_utc, "meta", "first_seen_at")
     ) + "</ul>"
 
 
@@ -707,10 +734,12 @@ def main():
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
     youtube, youtube_err = youtube_hits()
-    news = [i for i in news if not is_removed_url(i.get("url", ""), remove_urls)]
-    hn = [i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)]
-    reddit = [i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)]
-    youtube = [i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)]
+    news = sort_by_recency([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")
+    hn = sort_by_recency([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at")
+    reddit = sort_by_recency([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created")
+    youtube = sort_by_recency([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")
+    if gh and gh.get("latest_open"):
+        gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
     errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err] if e]
 
     seen_state = load_seen_state()
@@ -761,8 +790,8 @@ def main():
         for i in news
     ) or "<li>No news items found this run.</li>"
 
-    x_items = [i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)]
-    other_social_items = [i for i in CURATED_SOCIAL if i not in x_items and not is_removed_url(i.get("url", ""), remove_urls)]
+    x_items = sort_by_recency([i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
+    other_social_items = sort_by_recency([i for i in CURATED_SOCIAL if i not in x_items and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
 
     x_html = "\n".join(
         f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
@@ -779,14 +808,19 @@ def main():
         for i in youtube
     ) or "<li>No YouTube videos found this run.</li>"
 
-    other_html_parts = [
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
-        for i in other_social_items
-    ]
-    other_html_parts.extend(
-        f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{meta_html([f"{i.get('points')} points", f"{i.get('comments')} comments", i.get("created_at")], now_utc, {2})}</small></li>'
-        for i in hn
-    )
+    other_items = []
+    for i in other_social_items:
+        other_items.append({"item": i, "date": recency_datetime(i, now_utc), "kind": "curated"})
+    for i in hn:
+        other_items.append({"item": i, "date": recency_datetime(i, now_utc, "created_at"), "kind": "hn"})
+    other_items.sort(key=lambda row: row["date"], reverse=True)
+    other_html_parts = []
+    for row in other_items:
+        i = row["item"]
+        if row["kind"] == "hn":
+            other_html_parts.append(f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{meta_html([f"{i.get('points')} points", f"{i.get('comments')} comments", i.get("created_at")], now_utc, {2})}</small></li>')
+        else:
+            other_html_parts.append(f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>')
     other_html = "\n".join(other_html_parts) or "<li>No other community hits found this run.</li>"
 
     primary_html = "\n".join(
