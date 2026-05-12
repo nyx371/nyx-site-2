@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import email.utils
 import hashlib
 import html
 import importlib.util
@@ -219,9 +220,10 @@ def reddit_hits(limit: int = 8):
             title = reddit_reader.clean(post.get("title"))
             if not title:
                 continue
-            created = dt.datetime.fromtimestamp(
+            created_dt = dt.datetime.fromtimestamp(
                 post.get("created_utc", 0), dt.timezone.utc
-            ).strftime("%Y-%m-%d %H:%M UTC")
+            )
+            created = created_dt.strftime("%Y-%m-%d %H:%M UTC")
             out.append({
                 "title": title,
                 "url": reddit_reader.post_url(post.get("permalink", "")),
@@ -230,6 +232,7 @@ def reddit_hits(limit: int = 8):
                 "score": post.get("score", 0),
                 "comments": post.get("num_comments", 0),
                 "created": created,
+                "created_at": created_dt.isoformat(),
                 "external_url": post.get("url") if post.get("url") and not str(post.get("url")).startswith("https://www.reddit.com") else "",
             })
         return out, None
@@ -362,9 +365,103 @@ def link(url: str, text: str) -> str:
     return f'<a href="{esc(url)}" target="_blank" rel="noopener noreferrer">{esc(text)}</a>'
 
 
+def parse_datetime_value(value: str, now_utc: dt.datetime | None = None):
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+
+    try:
+        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.timezone.utc)
+    except Exception:
+        pass
+
+    try:
+        parsed = email.utils.parsedate_to_datetime(text)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.timezone.utc)
+    except Exception:
+        pass
+
+    for fmt in ("%Y-%m-%d %H:%M UTC", "%Y-%m-%d"):
+        try:
+            parsed = dt.datetime.strptime(text, fmt)
+            return parsed.replace(tzinfo=dt.timezone.utc)
+        except Exception:
+            pass
+
+    if now_utc:
+        m = re.match(r"^(?:about\s+)?(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago$", text, re.I)
+        if m:
+            n = int(m.group(1))
+            unit = m.group(2).lower()
+            days_per = {"second": 1 / 86400, "minute": 1 / 1440, "hour": 1 / 24, "day": 1, "week": 7, "month": 30, "year": 365}[unit]
+            return now_utc - dt.timedelta(days=n * days_per)
+        m = re.match(r"^(\d+)\s*(s|m|h|d|w|mo|y)\s+ago$", text, re.I)
+        if m:
+            n = int(m.group(1))
+            unit = m.group(2).lower()
+            days_per = {"s": 1 / 86400, "m": 1 / 1440, "h": 1 / 24, "d": 1, "w": 7, "mo": 30, "y": 365}[unit]
+            return now_utc - dt.timedelta(days=n * days_per)
+    return None
+
+
+def relative_time_text(value: str, now_utc: dt.datetime) -> str:
+    parsed = parse_datetime_value(value, now_utc)
+    if not parsed:
+        return str(value or "")
+    parsed = parsed.astimezone(dt.timezone.utc)
+    delta = now_utc - parsed
+    seconds = int(delta.total_seconds())
+    if seconds < 0:
+        seconds = abs(seconds)
+        suffix = "from now"
+    else:
+        suffix = "ago"
+    units = [
+        (365 * 24 * 3600, "year"),
+        (30 * 24 * 3600, "month"),
+        (7 * 24 * 3600, "week"),
+        (24 * 3600, "day"),
+        (3600, "hour"),
+        (60, "minute"),
+    ]
+    for unit_seconds, label in units:
+        if seconds >= unit_seconds:
+            count = max(1, seconds // unit_seconds)
+            return f"{count} {label}{'' if count == 1 else 's'} {suffix}"
+    return "just now" if suffix == "ago" else "in less than a minute"
+
+
+def exact_time_title(value: str, now_utc: dt.datetime) -> str:
+    parsed = parse_datetime_value(value, now_utc)
+    if not parsed:
+        return str(value or "")
+    return parsed.astimezone(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+def time_html(value: str, now_utc: dt.datetime) -> str:
+    parsed = parse_datetime_value(value, now_utc)
+    if not parsed:
+        return esc(value)
+    exact = exact_time_title(value, now_utc)
+    return f'<time datetime="{esc(parsed.astimezone(dt.timezone.utc).isoformat())}" title="{esc(exact)}">{esc(relative_time_text(value, now_utc))}</time>'
+
+
+def meta_html(parts, now_utc: dt.datetime, date_indexes: set[int] | None = None) -> str:
+    date_indexes = date_indexes or set()
+    rendered = []
+    for idx, part in enumerate(parts):
+        if part is None or part == "":
+            continue
+        rendered.append(time_html(part, now_utc) if idx in date_indexes else esc(part))
+    return " · ".join(rendered)
+
+
 def render_stat_grid(stats: list[tuple[str, object]]) -> str:
     items = [
-        f'<div class="stat-box"><span>{esc(label)}</span><strong>{esc(value)}</strong></div>'
+        f'<div class="stat-box"><span>{esc(label)}</span><strong>{value if isinstance(value, str) and value.startswith("<time ") else esc(value)}</strong></div>'
         for label, value in stats
         if value is not None
     ]
@@ -451,13 +548,13 @@ def prune_removed_seen(seen: dict, remove_urls: set[str]) -> int:
     return len(removed_ids)
 
 
-def render_new_items(new_items, initialized: bool):
+def render_new_items(new_items, initialized: bool, now_utc: dt.datetime):
     if not initialized:
         return '<p class="empty">Tracking initialized. Future updates will lead with posts not seen before.</p>'
     if not new_items:
         return '<p class="empty">No new tracked posts since the previous update.</p>'
     return "<ul>" + "\n".join(
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{esc(i.get("meta") or "new")}</small></li>'
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{time_html(i.get("meta") or "new", now_utc)}</small></li>'
         for i in new_items
     ) + "</ul>"
 
@@ -514,7 +611,7 @@ def render_line_chart(series: dict, today: dt.date, empty_text: str, aria_label:
         for i, (day, v) in enumerate(zip(days, values))
     )
     labels = "".join(
-        f'<text x="{x_at(i):.1f}" y="{height - 16}" text-anchor="middle">{esc(day.strftime("%m-%d"))}</text>'
+        f'<text x="{x_at(i):.1f}" y="{height - 16}" text-anchor="middle"><title>{esc(day.isoformat())}</title>{esc(relative_time_text(day.isoformat(), dt.datetime.combine(today, dt.time.min, tzinfo=dt.timezone.utc)))}</text>'
         for i, day in enumerate(days)
     )
     grid = "".join(
@@ -533,7 +630,7 @@ def render_line_chart(series: dict, today: dt.date, empty_text: str, aria_label:
     </div>'''
 
 
-def render_social_posts_chart(seen: dict, today: dt.date) -> str:
+def render_social_posts_chart(seen: dict, today: dt.date, now_utc: dt.datetime) -> str:
     daily_counts = {}
     for item in seen.values():
         if not is_social_source(item.get("source", "")):
@@ -553,7 +650,7 @@ def render_social_posts_chart(seen: dict, today: dt.date) -> str:
 
     if cumulative_counts:
         latest_day = max(cumulative_counts)
-        note = f'{cumulative_counts[latest_day]} cumulative social/community posts tracked since {esc(min(cumulative_counts).isoformat())}. Counts are cumulative by first-seen day for X, YouTube, Hacker News, and Reddit items.'
+        note = f'{cumulative_counts[latest_day]} cumulative social/community posts tracked since {time_html(min(cumulative_counts).isoformat(), now_utc)}. Counts are cumulative by first-seen day for X, YouTube, Hacker News, and Reddit items.'
     else:
         note = ""
     return render_line_chart(cumulative_counts, today, "No social/community posts tracked yet.", "Line chart of cumulative social and community posts tracked over time", note, "posts")
@@ -566,7 +663,7 @@ def update_github_star_history(state: dict, gh: dict | None, today: dt.date):
     return history
 
 
-def render_github_stars_chart(history: dict, today: dt.date) -> str:
+def render_github_stars_chart(history: dict, today: dt.date, now_utc: dt.datetime) -> str:
     series = {}
     for day, stars in (history or {}).items():
         try:
@@ -575,7 +672,7 @@ def render_github_stars_chart(history: dict, today: dt.date) -> str:
             continue
     if series:
         latest_day = max(series)
-        note = f'GitHub stars tracked daily starting {esc(min(series).isoformat())}. Latest: {series[latest_day]} stars on {esc(latest_day.isoformat())}.'
+        note = f'GitHub stars tracked daily starting {time_html(min(series).isoformat(), now_utc)}. Latest: {series[latest_day]} stars on {time_html(latest_day.isoformat(), now_utc)}.'
     else:
         note = ""
     return render_line_chart(series, today, "No GitHub star history recorded yet.", "Line chart of GitHub stars per day", note, "stars")
@@ -624,9 +721,9 @@ def main():
     seen_state["last_updated_at"] = now_utc.isoformat()
     github_star_history = update_github_star_history(seen_state, gh, now_local.date())
     save_seen_state(seen_state)
-    new_items_html = render_new_items(new_items, initialized)
-    social_chart_html = render_social_posts_chart(seen, now_local.date())
-    github_stars_chart_html = render_github_stars_chart(github_star_history, now_local.date())
+    new_items_html = render_new_items(new_items, initialized, now_utc)
+    social_chart_html = render_social_posts_chart(seen, now_local.date(), now_utc)
+    github_stars_chart_html = render_github_stars_chart(github_star_history, now_local.date(), now_utc)
 
     gh_stats_html = "<p class='empty'>GitHub stats unavailable.</p>"
     if gh:
@@ -634,7 +731,7 @@ def main():
             ("Stars", gh.get("stars")),
             ("Forks", gh.get("forks")),
             ("Open issues/PRs", gh.get("open_issues")),
-            ("Updated", gh.get("updated_at")),
+            ("Updated", time_html(gh.get("updated_at"), now_utc)),
         ])
 
     clawhub_stats_html = "<p class='empty'>ClawHub stats unavailable.</p>"
@@ -644,12 +741,12 @@ def main():
             ("Downloads", clawhub.get("downloads")),
             ("Versions", clawhub.get("versions")),
             ("Current version", f"v{clawhub.get('version')}" if clawhub.get("version") else None),
-            ("Updated", clawhub.get("updated")),
+            ("Updated", time_html(clawhub.get("updated"), now_utc) if clawhub.get("updated") else None),
             ("License", clawhub.get("license")),
         ])
 
     news_html = "\n".join(
-        f'<li><strong>{esc(i["source"] or "News")}</strong>: {link(i["url"], i["title"])}<small>{esc(i["published"])}</small></li>'
+        f'<li><strong>{esc(i["source"] or "News")}</strong>: {link(i["url"], i["title"])}<small>{time_html(i["published"], now_utc)}</small></li>'
         for i in news
     ) or "<li>No news items found this run.</li>"
 
@@ -662,12 +759,12 @@ def main():
     ) or "<li>No X posts tracked this run.</li>"
 
     reddit_html = "\n".join(
-        f'<li><strong>{esc(i["subreddit"])}</strong>: {link(i["url"], i["title"])}<small>u/{esc(i["author"])} · {esc(i["score"])} pts · {esc(i["comments"])} comments · {esc(i["created"])}{(" · external: " + link(i["external_url"], "source")) if i.get("external_url") else ""}</small></li>'
+        f'<li><strong>{esc(i["subreddit"])}</strong>: {link(i["url"], i["title"])}<small>u/{esc(i["author"])} · {esc(i["score"])} pts · {esc(i["comments"])} comments · {time_html(i.get("created_at") or i.get("created"), now_utc)}{(" · external: " + link(i["external_url"], "source")) if i.get("external_url") else ""}</small></li>'
         for i in reddit
     ) or "<li>No Reddit hits found this run.</li>"
 
     youtube_html = "\n".join(
-        f'<li><strong>{esc(i.get("channel") or "YouTube")}</strong>: {link(i["url"], i["title"])}<small>{esc(" · ".join(part for part in [i.get("published"), i.get("views"), i.get("duration")] if part))}</small></li>'
+        f'<li><strong>{esc(i.get("channel") or "YouTube")}</strong>: {link(i["url"], i["title"])}<small>{meta_html([i.get("published"), i.get("views"), i.get("duration")], now_utc, {0})}</small></li>'
         for i in youtube
     ) or "<li>No YouTube videos found this run.</li>"
 
@@ -676,7 +773,7 @@ def main():
         for i in other_social_items
     ]
     other_html_parts.extend(
-        f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{esc(i.get("points"))} points · {esc(i.get("comments"))} comments</small></li>'
+        f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{meta_html([f"{i.get('points')} points", f"{i.get('comments')} comments", i.get("created_at")], now_utc, {2})}</small></li>'
         for i in hn
     )
     other_html = "\n".join(other_html_parts) or "<li>No other community hits found this run.</li>"
@@ -689,7 +786,7 @@ def main():
     issues_html = ""
     if gh and gh.get("latest_open"):
         issues_html = "\n".join(
-            f'<li><strong>{esc(i["kind"])}</strong>: {link(i["url"], i["title"])} <small>{esc(i["created_at"])}</small></li>'
+            f'<li><strong>{esc(i["kind"])}</strong>: {link(i["url"], i["title"])} <small>{time_html(i["created_at"], now_utc)}</small></li>'
             for i in gh["latest_open"]
         )
     else:
@@ -748,8 +845,7 @@ def main():
     <h1>Save to Spotify chatter tracker</h1>
     <p class="lede">A lightweight hourly snapshot of where people are talking about Spotify’s beta CLI for saving AI-generated personal podcasts into Spotify.</p>
     <div class="meta">
-      <span class="pill">Last updated: {esc(now_local.strftime('%Y-%m-%d %H:%M %Z'))}</span>
-      <span class="pill">UTC: {esc(now_utc.strftime('%Y-%m-%d %H:%M'))}</span>
+      <span class="pill">Last updated: {time_html(now_utc.isoformat(), now_utc)}</span>
       <span class="pill">Auto-refresh target: hourly</span>
     </div>
   </header>
