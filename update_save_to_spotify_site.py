@@ -11,6 +11,7 @@ import json
 import pathlib
 import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -208,16 +209,26 @@ def reddit_hits(limit: int = 8):
         reddit_reader = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = reddit_reader
         spec.loader.exec_module(reddit_reader)
-        result = reddit_reader.fetch_json(
-            "/search.json",
-            {
-                "q": '\"Save to Spotify\"',
-                "limit": limit,
-                "sort": "new",
-                "t": "month",
-                "raw_json": 1,
-            },
-        )
+        params = {
+            "q": '\"Save to Spotify\"',
+            "limit": limit,
+            "sort": "new",
+            "t": "month",
+            "raw_json": 1,
+        }
+        delays = [2, 5, 10]
+        last_error = None
+        for attempt in range(len(delays) + 1):
+            try:
+                result = reddit_reader.fetch_json("/search.json", params)
+                break
+            except BaseException as e:
+                last_error = e
+                if "HTTP 403 from Reddit" not in str(e) or attempt >= len(delays):
+                    raise
+                time.sleep(delays[attempt])
+        else:
+            raise last_error or RuntimeError("Reddit reader failed without an error")
         out = []
         for child in reddit_reader.listing_children(result.data):
             post = child.get("data", {})
