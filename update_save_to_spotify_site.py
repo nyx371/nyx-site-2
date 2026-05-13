@@ -25,6 +25,7 @@ REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
 
 NEWS_QUERY = '"Save to Spotify" Spotify AI podcasts'
 YOUTUBE_QUERIES = [
+    '"save to spotify" CLI',
     'Spotify "Personal Podcasts" "AI agents"',
     '"Spotify Personal Podcasts"',
     '"personal-podcasts-launch"',
