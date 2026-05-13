@@ -23,9 +23,14 @@ REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_read
 SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
 
-NEWS_QUERY = '"Save to Spotify" Spotify AI podcasts'
+SEARCH_TERMS = [
+    '"Save to Spotify"',
+    '"save-to-spotify"',
+]
+NEWS_QUERY = '("Save to Spotify" OR "save-to-spotify") Spotify AI podcasts'
 YOUTUBE_QUERIES = [
     '"save to spotify" CLI',
+    '"save-to-spotify"',
     'Spotify "Personal Podcasts" "AI agents"',
     '"Spotify Personal Podcasts"',
     '"personal-podcasts-launch"',
@@ -210,47 +215,56 @@ def reddit_hits(limit: int = 8):
         reddit_reader = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = reddit_reader
         spec.loader.exec_module(reddit_reader)
-        params = {
-            "q": '\"Save to Spotify\"',
-            "limit": limit,
-            "sort": "new",
-            "t": "month",
-            "raw_json": 1,
-        }
-        delays = [2, 5, 10]
-        last_error = None
-        for attempt in range(len(delays) + 1):
-            try:
-                result = reddit_reader.fetch_json("/search.json", params)
-                break
-            except BaseException as e:
-                last_error = e
-                if "HTTP 403 from Reddit" not in str(e) or attempt >= len(delays):
-                    raise
-                time.sleep(delays[attempt])
-        else:
-            raise last_error or RuntimeError("Reddit reader failed without an error")
         out = []
-        for child in reddit_reader.listing_children(result.data):
-            post = child.get("data", {})
-            title = reddit_reader.clean(post.get("title"))
-            if not title:
-                continue
-            created_dt = dt.datetime.fromtimestamp(
-                post.get("created_utc", 0), dt.timezone.utc
-            )
-            created = created_dt.strftime("%Y-%m-%d %H:%M UTC")
-            out.append({
-                "title": title,
-                "url": reddit_reader.post_url(post.get("permalink", "")),
-                "subreddit": post.get("subreddit_name_prefixed") or f"r/{post.get('subreddit', '?')}",
-                "author": post.get("author") or "?",
-                "score": post.get("score", 0),
-                "comments": post.get("num_comments", 0),
-                "created": created,
-                "created_at": created_dt.isoformat(),
-                "external_url": post.get("url") if post.get("url") and not str(post.get("url")).startswith("https://www.reddit.com") else "",
-            })
+        seen_urls = set()
+        for term in SEARCH_TERMS:
+            params = {
+                "q": term,
+                "limit": limit,
+                "sort": "new",
+                "t": "month",
+                "raw_json": 1,
+            }
+            delays = [2, 5, 10]
+            last_error = None
+            for attempt in range(len(delays) + 1):
+                try:
+                    result = reddit_reader.fetch_json("/search.json", params)
+                    break
+                except BaseException as e:
+                    last_error = e
+                    if "HTTP 403 from Reddit" not in str(e) or attempt >= len(delays):
+                        raise
+                    time.sleep(delays[attempt])
+            else:
+                raise last_error or RuntimeError("Reddit reader failed without an error")
+            for child in reddit_reader.listing_children(result.data):
+                post = child.get("data", {})
+                title = reddit_reader.clean(post.get("title"))
+                if not title:
+                    continue
+                url = reddit_reader.post_url(post.get("permalink", ""))
+                if url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                created_dt = dt.datetime.fromtimestamp(
+                    post.get("created_utc", 0), dt.timezone.utc
+                )
+                created = created_dt.strftime("%Y-%m-%d %H:%M UTC")
+                out.append({
+                    "title": title,
+                    "url": url,
+                    "subreddit": post.get("subreddit_name_prefixed") or f"r/{post.get('subreddit', '?')}",
+                    "author": post.get("author") or "?",
+                    "score": post.get("score", 0),
+                    "comments": post.get("num_comments", 0),
+                    "created": created,
+                    "created_at": created_dt.isoformat(),
+                    "external_url": post.get("url") if post.get("url") and not str(post.get("url")).startswith("https://www.reddit.com") else "",
+                    "query": term,
+                })
+                if len(out) >= limit:
+                    return out, None
         return out, None
     except BaseException as e:
         return [], f"Reddit reader failed: {e!r}"
@@ -366,19 +380,27 @@ def youtube_hits(limit: int = 12):
 
 def hn_hits():
     try:
-        q = urllib.parse.quote('"Save to Spotify"')
-        data = fetch_json(f"https://hn.algolia.com/api/v1/search?query={q}")
         out = []
-        for h in data.get("hits", [])[:8]:
-            title = h.get("title") or h.get("story_title") or "Untitled"
-            url = h.get("url") or f"https://news.ycombinator.com/item?id={h.get('objectID')}"
-            out.append({
-                "title": title,
-                "url": url,
-                "points": h.get("points"),
-                "comments": h.get("num_comments"),
-                "created_at": h.get("created_at"),
-            })
+        seen_urls = set()
+        for term in SEARCH_TERMS:
+            q = urllib.parse.quote(term)
+            data = fetch_json(f"https://hn.algolia.com/api/v1/search?query={q}")
+            for h in data.get("hits", []):
+                title = h.get("title") or h.get("story_title") or "Untitled"
+                url = h.get("url") or f"https://news.ycombinator.com/item?id={h.get('objectID')}"
+                if url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                out.append({
+                    "title": title,
+                    "url": url,
+                    "points": h.get("points"),
+                    "comments": h.get("num_comments"),
+                    "created_at": h.get("created_at"),
+                    "query": term,
+                })
+                if len(out) >= 8:
+                    return out, None
         return out, None
     except Exception as e:
         return [], f"HN API failed: {e!r}"
