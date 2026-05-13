@@ -205,7 +205,7 @@ def clawhub_stats():
         return None, f"ClawHub stats fetch failed: {e!r}"
 
 
-def reddit_hits(limit: int = 8):
+def reddit_hits(limit: int = 100):
     """Fetch Reddit discussion via the local public Reddit reader helper."""
     try:
         if not REDDIT_READER.exists():
@@ -329,7 +329,7 @@ def _walk_dicts(value):
             yield from _walk_dicts(child)
 
 
-def youtube_hits(limit: int = 12):
+def youtube_hits(limit: int = 100):
     """Fetch YouTube search results from public search pages (no API key)."""
     out = []
     seen_video_ids = set()
@@ -400,7 +400,7 @@ def hn_hits():
                     "created_at": h.get("created_at"),
                     "query": term,
                 })
-                if len(out) >= 8:
+                if len(out) >= 100:
                     return out, None
         return out, None
     except Exception as e:
@@ -885,7 +885,7 @@ def main():
     ) or "<li>No news items found this run.</li>"
 
     x_items = sort_by_recency([i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
-    other_social_items = sort_by_recency([i for i in CURATED_SOCIAL if i not in x_items and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
+    other_social_items = sort_by_recency([i for i in CURATED_SOCIAL if i not in x_items and not (i.get("source") or "").lower().startswith("hacker news") and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
 
     x_html = "\n".join(
         f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
@@ -902,20 +902,15 @@ def main():
         for i in youtube
     ) or "<li>No YouTube videos found this run.</li>"
 
-    other_items = []
-    for i in other_social_items:
-        other_items.append({"item": i, "date": recency_datetime(i, now_utc), "kind": "curated"})
-    for i in hn:
-        other_items.append({"item": i, "date": recency_datetime(i, now_utc, "created_at"), "kind": "hn"})
-    other_items.sort(key=lambda row: row["date"], reverse=True)
-    other_html_parts = []
-    for row in other_items:
-        i = row["item"]
-        if row["kind"] == "hn":
-            other_html_parts.append(f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{meta_html([f"{i.get('points')} points", f"{i.get('comments')} comments", i.get("created_at")], now_utc, {2})}</small></li>')
-        else:
-            other_html_parts.append(f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>')
-    other_html = "\n".join(other_html_parts) or "<li>No other community hits found this run.</li>"
+    hn_html = "\n".join(
+        f'<li><strong>Hacker News</strong>: {link(i["url"], i["title"])} <small>{meta_html([f"{i.get('points')} points", f"{i.get('comments')} comments", i.get("created_at")], now_utc, {2})}</small></li>'
+        for i in hn
+    ) or "<li>No Hacker News hits found this run.</li>"
+
+    other_html = "\n".join(
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
+        for i in other_social_items
+    )
 
     primary_html = "\n".join(
         f'<li><strong>{esc(src)}</strong>: {link(url, title)}</li>'
@@ -951,10 +946,10 @@ def main():
     .pill {{ border:1px solid var(--line); background:#ffffff0a; color:var(--muted); border-radius:999px; padding:.45rem .75rem; font-size:.9rem; }}
     main {{ max-width:1120px; margin:auto; padding: 1rem clamp(1rem, 5vw, 4rem) 4rem; display:grid; gap:1rem; }}
     .grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; }}
-    .social-columns {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1rem; align-items:start; }}
-    .social-column {{ border:1px solid var(--line); background:#ffffff08; border-radius:18px; padding:1rem; min-width:0; }}
-    .social-column h3 {{ margin:0 0 .85rem; font-size:1rem; color:#d9fbe4; }}
-    @media (max-width: 860px) {{ .social-columns {{ grid-template-columns: 1fr; }} }}
+    .social-sites {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem; align-items:start; }}
+    .social-site h2 {{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; }}
+    .count {{ color:var(--muted); font-size:.78rem; font-weight:500; }}
+    @media (max-width: 860px) {{ .social-sites {{ grid-template-columns: 1fr; }} }}
     .card {{ border:1px solid var(--line); background:var(--card); border-radius:24px; padding:1.2rem; box-shadow: 0 20px 80px #0005; backdrop-filter: blur(16px); }}
     h2 {{ margin:.1rem 0 1rem; font-size:1.1rem; letter-spacing:-.02em; }}
     ul {{ list-style:none; padding:0; margin:0; display:grid; gap:.85rem; }}
@@ -1005,14 +1000,12 @@ def main():
     <section class="card"><h2>GitHub stars per day</h2>{github_stars_chart_html}</section>
     <section class="card"><h2>Latest news pickup</h2><ul>{news_html}</ul></section>
     <section class="card"><h2>Social + media posts per day</h2>{social_chart_html}</section>
-    <section class="card">
-      <h2>Social / community places to watch</h2>
-      <div class="social-columns">
-        <section class="social-column"><h3>X</h3><ul>{x_html}</ul></section>
-        <section class="social-column"><h3>YouTube</h3><ul>{youtube_html}</ul></section>
-        <section class="social-column"><h3>Reddit</h3><ul>{reddit_html}</ul></section>
-        <section class="social-column"><h3>Other</h3><ul>{other_html}</ul></section>
-      </div>
+    <section class="social-sites">
+      <section class="card social-site"><h2>X <span class="count">{len(x_items)} items</span></h2><ul>{x_html}</ul></section>
+      <section class="card social-site"><h2>YouTube <span class="count">{len(youtube)} items</span></h2><ul>{youtube_html}</ul></section>
+      <section class="card social-site"><h2>Reddit <span class="count">{len(reddit)} items</span></h2><ul>{reddit_html}</ul></section>
+      <section class="card social-site"><h2>Hacker News <span class="count">{len(hn)} items</span></h2><ul>{hn_html}</ul></section>
+      {f'<section class="card social-site"><h2>Other <span class="count">{len(other_social_items)} items</span></h2><ul>{other_html}</ul></section>' if other_html else ''}
     </section>
     <section class="card"><h2>Remove list</h2><p class="empty">{len(remove_urls)} URLs excluded from this snapshot. {pruned_count} previously tracked matches pruned this run.</p></section>
     {errors_html}
