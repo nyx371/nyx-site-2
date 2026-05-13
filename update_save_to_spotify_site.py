@@ -545,6 +545,14 @@ def filter_min_media_date(items, now_utc: dt.datetime, *fields: str):
     return [i for i in items if not is_before_min_media_date(i, now_utc, *fields)]
 
 
+def has_presave_title(item: dict) -> bool:
+    return bool(re.search(r"\bpre(?:-|\s+)save\b", str(item.get("title") or ""), re.I))
+
+
+def filter_presave_titles(items):
+    return [i for i in items if not has_presave_title(i)]
+
+
 def render_stat_grid(stats: list[tuple[str, object]]) -> str:
     items = [
         f'<div class="stat-box"><span>{esc(label)}</span><strong>{value if isinstance(value, str) and value.startswith("<time ") else esc(value)}</strong></div>'
@@ -643,6 +651,13 @@ def prune_old_media_seen(seen: dict, now_utc: dt.datetime) -> int:
             continue
         if is_before_min_media_date(item, now_utc, "published_at"):
             removed_ids.append(item_id)
+    for item_id in removed_ids:
+        seen.pop(item_id, None)
+    return len(removed_ids)
+
+
+def prune_presave_seen(seen: dict) -> int:
+    removed_ids = [item_id for item_id, item in seen.items() if has_presave_title(item)]
     for item_id in removed_ids:
         seen.pop(item_id, None)
     return len(removed_ids)
@@ -812,17 +827,17 @@ def main():
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
     youtube, youtube_err = youtube_hits()
-    news = sort_by_recency(filter_min_media_date([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published"), now_utc, "published")
-    hn = sort_by_recency(filter_min_media_date([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at"), now_utc, "created_at")
-    reddit = sort_by_recency(filter_min_media_date([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created"), now_utc, "created_at", "created")
-    youtube = sort_by_recency(filter_min_media_date([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published"), now_utc, "published")
+    news = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
+    hn = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at")), now_utc, "created_at")
+    reddit = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created")), now_utc, "created_at", "created")
+    youtube = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
     if gh and gh.get("latest_open"):
         gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
     errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
-    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc)
+    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen)
     current_items = collect_seen_items(news, gh, hn, reddit, youtube, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
