@@ -946,7 +946,7 @@ def main():
     .pill {{ border:1px solid var(--line); background:#ffffff0a; color:var(--muted); border-radius:999px; padding:.45rem .75rem; font-size:.9rem; }}
     main {{ max-width:1120px; margin:auto; padding: 1rem clamp(1rem, 5vw, 4rem) 4rem; display:grid; gap:1rem; }}
     .grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; }}
-    .social-sites {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem; align-items:start; }}
+    .social-sites {{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:1rem; align-items:start; }}
     .social-site h2 {{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; }}
     .count {{ color:var(--muted); font-size:.78rem; font-weight:500; }}
     @media (max-width: 860px) {{ .social-sites {{ grid-template-columns: 1fr; }} }}
