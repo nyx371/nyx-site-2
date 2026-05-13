@@ -5,11 +5,20 @@
     "2026-05-13": 291
   },
   "initialized": true,
-  "last_updated_at": "2026-05-13T17:14:09.979458+00:00",
+  "last_updated_at": "2026-05-13T17:15:10.831526+00:00",
   "seen": {
+    "035de54221ed478d3591a56aa86314a0108e0a0a": {
+      "first_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "Changing life with AI \u00b7 4 days ago \u00b7 117 views \u00b7 1:06",
+      "published_at": "4 days ago",
+      "source": "YouTube",
+      "title": "Turn AI notes into a private Spotify podcast",
+      "url": "https://www.youtube.com/watch?v=Z62fT_vLYKU"
+    },
     "04debc8f57af90b84376518dad6342ce37ac6e9e": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "u/shinot \u00b7 2 pts \u00b7 3 comments",
       "published_at": "2026-05-08T03:08:06+00:00",
       "source": "r/AIjp",
@@ -25,18 +34,36 @@
       "title": "GenAI Secret Sauce Daily Digest - 2026-05-08",
       "url": "https://www.youtube.com/watch?v=X3VbuiR8kno"
     },
+    "0c65855a2fd16865b38779e5d00f747b301adc2d": {
+      "first_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "bcool \u00b7 6 days ago \u00b7 No views \u00b7 0:42",
+      "published_at": "6 days ago",
+      "source": "YouTube",
+      "title": "Save AI-Generated Podcasts to Spotify with OpenClaw & Claude #Shorts",
+      "url": "https://www.youtube.com/watch?v=7I7T7wUOIxk"
+    },
     "14d228e1754f09b5389372ae50e4bdc15cb1c491": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 07:00:00 GMT",
       "published_at": "Thu, 07 May 2026 07:00:00 GMT",
       "source": "PPC Land",
       "title": "Spotify lets AI agents save personal podcasts directly to your library",
       "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOYkdYVFdOeTlfRXRXaWNabUZYRDVIdTNKN1FhWUlvWUNiZnN3SmIwVDFjLS1yR3MtUExvaWl5MHVYMEFxYUVsWXVPMVhfWWxGLWxMTFduUXlDd2NOcTBUWlREY2REdUZjVFU4aHVyNU5udXdMQnVUZ2JnYnczM0M1UXdqd3QyRjhXUktPNFZocmpxdw?oc=5"
     },
+    "194c7ec6bfe6a16ee12c143f4487a17708f5adc8": {
+      "first_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "bcool \u00b7 6 days ago \u00b7 1 view \u00b7 0:40",
+      "published_at": "6 days ago",
+      "source": "YouTube",
+      "title": "Put AI-Generated Podcasts on Spotify with OpenClaw and Claude #Shorts",
+      "url": "https://www.youtube.com/watch?v=9BoOYMP27FU"
+    },
     "19bec23498f4a1b57a1d21e4ec0b46b06a7e3f23": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Sat, 09 May 2026 10:33:12 GMT",
       "published_at": "Sat, 09 May 2026 10:33:12 GMT",
       "source": "The Mac Observer",
@@ -54,7 +81,7 @@
     },
     "1c7b7400e4b17f1790ef79f760f535bcf61aecbe": {
       "first_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "AI\u30a4\u30d6\u30cb\u30e5\u30fc\u30b9 \u00b7 5 days ago \u00b7 100 views \u00b7 5:25",
       "published_at": "5 days ago",
       "source": "YouTube",
@@ -63,7 +90,7 @@
     },
     "1c7be69493beddd8561d1c159803540f0b8e322a": {
       "first_seen_at": "2026-05-12T17:06:37.305334+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "2026-05-12T16:17:44Z",
       "published_at": null,
       "source": "GitHub PR",
@@ -81,17 +108,26 @@
     },
     "2adf46684be57d6007f69629961d7c53d916af4a": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Fri, 08 May 2026 10:42:59 GMT",
       "published_at": "Fri, 08 May 2026 10:42:59 GMT",
       "source": "Latest news from Azerbaijan",
       "title": "Spotify launches tool for AI-generated personal podcasts",
       "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPM3pIdlg0dEtwOXplSGlJdWxfNnBQNm9EMW1fdkR0RkJLZjZKMWRSMkpPb21vRUw2Y3ZwQmZzRzlZM0NXTTJsZnhsQzJNSDlRQ2lFMER4ODlqYW5CekNQOHphZ3lKZTE3RUZMSGs3UFZTalFBRW1RX1hFM1N5cnJOU1YxUQ?oc=5"
     },
+    "2bb8037b84352f830402cf1435b16dfc49c5e872": {
+      "first_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "\u306a\u306a\u3081\u8aad\u307f\u7de8\u96c6\u90e8 \u00b7 4 days ago \u00b7 262 views \u00b7 0:29",
+      "published_at": "4 days ago",
+      "source": "YouTube",
+      "title": "Spotify announces new AI-powered audio content management tool",
+      "url": "https://www.youtube.com/watch?v=LyQaOabMGkQ"
+    },
     "362669f45c8c53c5625124b3b65ff0b7b436eb99": {
       "first_seen_at": "2026-05-11T20:41:21.278796+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "meta": "u/LinkedInNews \u00b7 6 pts \u00b7 0 comments",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "u/LinkedInNews \u00b7 9 pts \u00b7 0 comments",
       "published_at": "2026-05-11T20:05:32+00:00",
       "source": "r/CLI",
       "title": "Spotify CEO says you can use Save to Spotify CLI to add personal podcasts to your Spotify library",
@@ -99,7 +135,7 @@
     },
     "3d8d20e04ff48bde710fb0e820ac8ae5477f3f04": {
       "first_seen_at": "2026-05-12T14:58:26.692682+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "GadInsider  \u00b7 3d ago \u00b7 43 views \u00b7 1:54",
       "published_at": "3d ago",
       "source": "YouTube",
@@ -108,7 +144,7 @@
     },
     "445b4b3ba555b41620650b8ff02dc5f2ec7348c9": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 14:15:40 GMT",
       "published_at": "Thu, 07 May 2026 14:15:40 GMT",
       "source": "The Verge",
@@ -125,7 +161,7 @@
     },
     "505f582b15f451e4793414755801767c96b86230": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 14:12:51 GMT",
       "published_at": "Thu, 07 May 2026 14:12:51 GMT",
       "source": "Thurrott.com",
@@ -134,7 +170,7 @@
     },
     "590406fb33c9e3ec422078c413cabb3d6cee4693": {
       "first_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "AI&Tech\u653e\u9001\u5c40 \u00b7 4 days ago \u00b7 88 views \u00b7 4:52",
       "published_at": "4 days ago",
       "source": "YouTube",
@@ -143,7 +179,7 @@
     },
     "62a6867950b25548d7036f42a86740d0bee89868": {
       "first_seen_at": "2026-05-11T20:41:21.278796+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Good thread to watch for product/strategy discussion.",
       "published_at": "2026-05-08T15:34:51.145000+00:00",
       "source": "X / @mignano",
@@ -160,8 +196,8 @@
     },
     "781bf4c4fdcbeef07c7aa576edc28f5d0f0560ec": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "meta": "u/laytoun \u00b7 15 pts \u00b7 9 comments",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "u/laytoun \u00b7 14 pts \u00b7 9 comments",
       "published_at": "2026-05-09T19:03:52+00:00",
       "source": "r/openclaw",
       "title": "Using OpenClaw I automated my daily briefing into personal podcasts on Spotify",
@@ -178,7 +214,7 @@
     },
     "84624f859b6dbbab817f0001103546b8044a3f64": {
       "first_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "\u6a58\u9e26Juya \u00b7 5 days ago \u00b7 1,072 views \u00b7 7:12",
       "published_at": "5 days ago",
       "source": "YouTube",
@@ -196,7 +232,7 @@
     },
     "8c832f3d8701aaf4a2eff26f320c4e0c886387c4": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 14:19:58 GMT",
       "published_at": "Thu, 07 May 2026 14:19:58 GMT",
       "source": "Let's Data Science",
@@ -205,7 +241,7 @@
     },
     "8dee5b7b4449ce7e3d9b1e5b3f915b539a510485": {
       "first_seen_at": "2026-05-11T20:41:21.278796+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Initially 3 points / 0 comments; updated stats below when API finds it.",
       "published_at": null,
       "source": "Hacker News",
@@ -229,16 +265,25 @@
     },
     "9b3f0be11be69bf7e0b890a102d03a1f4469cd0a": {
       "first_seen_at": "2026-05-11T20:41:21.278796+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Useful for launch context and replies from dev circle.",
       "published_at": "2026-05-07T17:27:10.209000+00:00",
       "source": "X / @laytoun",
       "title": "Builder/team launch excitement: agents can create Personal Podcasts and save to Spotify.",
       "url": "https://x.com/laytoun/status/2052440113502629939"
     },
+    "9ba593afa1d980c6394005f7e3308b6ec9588a65": {
+      "first_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "bcool \u00b7 6 days ago \u00b7 1 view \u00b7 0:36",
+      "published_at": "6 days ago",
+      "source": "YouTube",
+      "title": "Automate AI Podcasts to Spotify with OpenClaw & Claude Code #Shorts",
+      "url": "https://www.youtube.com/watch?v=2wz3nx7faCE"
+    },
     "a0e0b783bf82cc42601aa07fabd775d79ed359d5": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "2026-05-08T19:34:10Z",
       "published_at": null,
       "source": "GitHub Issue",
@@ -247,7 +292,7 @@
     },
     "a21d4b80440ddc84d6870fc1ffa80c968b12e371": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 13:05:38 GMT",
       "published_at": "Thu, 07 May 2026 13:05:38 GMT",
       "source": "Spotify",
@@ -256,7 +301,7 @@
     },
     "a4c179aed92361a61038ce2020bf7cfc882fe67a": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 19:40:00 GMT",
       "published_at": "Thu, 07 May 2026 19:40:00 GMT",
       "source": "Neowin",
@@ -304,7 +349,7 @@
     },
     "c20bc493d5a936d270d19ab6ac9d0c3c35d5c0d4": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Fri, 08 May 2026 10:31:43 GMT",
       "published_at": "Fri, 08 May 2026 10:31:43 GMT",
       "source": "MacRumors",
@@ -313,7 +358,7 @@
     },
     "c28775ea0ec490b4d65c6fd1bb927a4f022ebfc0": {
       "first_seen_at": "2026-05-11T11:06:34.615937+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Mon, 11 May 2026 10:50:13 GMT",
       "published_at": "Mon, 11 May 2026 10:50:13 GMT",
       "source": "Android Headlines",
@@ -329,9 +374,18 @@
       "title": "AI News: OpenAI is Taking Over Again!",
       "url": "https://www.youtube.com/watch?v=SXneZ3bRKO4"
     },
+    "c4b92fd6826b782b5d7c320ba70c3f54347adc41": {
+      "first_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
+      "meta": "Saeb Masarwa Eng \u00b7 5d ago \u00b7 1 view \u00b7 0:20",
+      "published_at": "5d ago",
+      "source": "YouTube",
+      "title": "Spotify lets AI agents like OpenClaw and Claude Code make personal podcasts",
+      "url": "https://www.youtube.com/watch?v=2f4G_pXOpWc"
+    },
     "cdf1d5e52f86374f6830572bc286997404009fbc": {
       "first_seen_at": "2026-05-11T08:06:35.734219+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "2026-05-11T07:13:17Z",
       "published_at": null,
       "source": "GitHub Issue",
@@ -349,7 +403,7 @@
     },
     "d0f3956b701e8379b9db64accfa0d3d50b6b3382": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "3 points \u00b7 0 comments",
       "published_at": "2026-05-08T13:12:59Z",
       "source": "Hacker News",
@@ -358,7 +412,7 @@
     },
     "d1e8231849006399b9cbab1aadd6d93436ac592d": {
       "first_seen_at": "2026-05-11T20:41:21.278796+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Useful for media pickup trail.",
       "published_at": "2026-05-07T14:41:05.271000+00:00",
       "source": "X / @mediagazer",
@@ -367,7 +421,7 @@
     },
     "d8fd0783c1f2ac340706bc8a52a788f7b510c903": {
       "first_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "\u5c0f\u3055\u306a\u753a\u306e\u6620\u50cf\u5236\u4f5c\u6240@ON CREATE \u00b7 4 days ago \u00b7 No views \u00b7 19:37",
       "published_at": "4 days ago",
       "source": "YouTube",
@@ -376,7 +430,7 @@
     },
     "db9a07bb4b18a4d9b6066ec718bf800d8ed0b9a1": {
       "first_seen_at": "2026-05-11T08:06:35.734219+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "2026-05-11T07:49:17Z",
       "published_at": null,
       "source": "GitHub Issue",
@@ -385,7 +439,7 @@
     },
     "de2101c3cc35f10312f13c93bb51399b59effb44": {
       "first_seen_at": "2026-05-11T08:06:35.734219+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "2026-05-11T07:56:14Z",
       "published_at": null,
       "source": "GitHub Issue",
@@ -394,7 +448,7 @@
     },
     "e6b14a35610e1e8278c1ec135cdb84500f63f734": {
       "first_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "AI Evening News \u00b7 5 days ago \u00b7 59 views \u00b7 6:03",
       "published_at": "5 days ago",
       "source": "YouTube",
@@ -421,7 +475,7 @@
     },
     "ecbc15ce5e4a30c6b9024b6d576a1f1ec1943fbb": {
       "first_seen_at": "2026-05-11T20:41:21.278796+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Shows agent/workflow interpretation.",
       "published_at": "2026-05-09T06:13:59.182000+00:00",
       "source": "X / @saen_dev",
@@ -430,7 +484,7 @@
     },
     "ee2576bb9f97ea68cef775755400ac4dfc8d1863": {
       "first_seen_at": "2026-05-13T17:14:09.979458+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "2026-05-13T17:13:10Z",
       "published_at": null,
       "source": "GitHub Issue",
@@ -439,7 +493,7 @@
     },
     "ef308b9291be1002ef6e3ec557fbb7cf7dd30761": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 15:30:00 GMT",
       "published_at": "Thu, 07 May 2026 15:30:00 GMT",
       "source": "podcastnewsdaily.com",
@@ -448,7 +502,7 @@
     },
     "f5cf2e5438741f3ee51740a13ec645da78f2bff9": {
       "first_seen_at": "2026-05-10T22:36:18.438667+00:00",
-      "last_seen_at": "2026-05-13T17:14:09.979458+00:00",
+      "last_seen_at": "2026-05-13T17:15:10.831526+00:00",
       "meta": "Thu, 07 May 2026 14:00:00 GMT",
       "published_at": "Thu, 07 May 2026 14:00:00 GMT",
       "source": "9to5Google",

@@ -325,38 +325,42 @@ def youtube_hits(limit: int = 12):
     }
 
     for query in YOUTUBE_QUERIES:
-        q = urllib.parse.quote(query)
-        url = f"https://www.youtube.com/results?search_query={q}&sp=CAI%253D"
-        try:
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=20) as r:
-                doc = r.read().decode("utf-8", errors="replace")
-            data = _extract_yt_initial_data(doc)
-            if not data:
-                errors.append(f"{query}: markup did not include ytInitialData")
-                continue
-            for node in _walk_dicts(data):
-                video = node.get("videoRenderer") if isinstance(node, dict) else None
-                if not video:
+        q = urllib.parse.quote_plus(query)
+        search_urls = [
+            f"https://www.youtube.com/results?search_query={q}",
+            f"https://www.youtube.com/results?search_query={q}&sp=CAI%253D",
+        ]
+        for url in search_urls:
+            try:
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=20) as r:
+                    doc = r.read().decode("utf-8", errors="replace")
+                data = _extract_yt_initial_data(doc)
+                if not data:
+                    errors.append(f"{query}: markup did not include ytInitialData for {url}")
                     continue
-                video_id = video.get("videoId")
-                title = _yt_text(video.get("title")) or "Untitled video"
-                if not video_id or video_id in seen_video_ids:
-                    continue
-                seen_video_ids.add(video_id)
-                out.append({
-                    "title": title,
-                    "url": f"https://www.youtube.com/watch?v={video_id}",
-                    "channel": _yt_text(video.get("ownerText")) or _yt_text(video.get("longBylineText")) or "YouTube",
-                    "published": _yt_text(video.get("publishedTimeText")),
-                    "views": _yt_text(video.get("viewCountText")),
-                    "duration": _yt_text(video.get("lengthText")),
-                    "query": query,
-                })
-                if len(out) >= limit:
-                    return out, ("; ".join(errors) if errors else None)
-        except Exception as e:
-            errors.append(f"{query}: {e!r}")
+                for node in _walk_dicts(data):
+                    video = node.get("videoRenderer") if isinstance(node, dict) else None
+                    if not video:
+                        continue
+                    video_id = video.get("videoId")
+                    title = _yt_text(video.get("title")) or "Untitled video"
+                    if not video_id or video_id in seen_video_ids:
+                        continue
+                    seen_video_ids.add(video_id)
+                    out.append({
+                        "title": title,
+                        "url": f"https://www.youtube.com/watch?v={video_id}",
+                        "channel": _yt_text(video.get("ownerText")) or _yt_text(video.get("longBylineText")) or "YouTube",
+                        "published": _yt_text(video.get("publishedTimeText")),
+                        "views": _yt_text(video.get("viewCountText")),
+                        "duration": _yt_text(video.get("lengthText")),
+                        "query": query,
+                    })
+                    if len(out) >= limit:
+                        return out, ("; ".join(errors) if errors else None)
+            except Exception as e:
+                errors.append(f"{query} via {url}: {e!r}")
 
     return out, ("; ".join(errors) if errors else None)
 
