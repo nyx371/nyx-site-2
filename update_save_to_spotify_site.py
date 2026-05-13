@@ -22,6 +22,7 @@ TRACKED_REPO = "spotify/save-to-spotify"
 REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_reader.py")
 SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
+MIN_MEDIA_DATE = dt.datetime(2026, 5, 7, tzinfo=dt.timezone.utc)
 
 SEARCH_TERMS = [
     '"Save to Spotify"',
@@ -535,6 +536,15 @@ def sort_by_recency(items, now_utc: dt.datetime, *fields: str):
     return sorted(items, key=lambda item: recency_datetime(item, now_utc, *fields), reverse=True)
 
 
+def is_before_min_media_date(item: dict, now_utc: dt.datetime, *fields: str) -> bool:
+    parsed = recency_datetime(item, now_utc, *fields)
+    return parsed != dt.datetime.min.replace(tzinfo=dt.timezone.utc) and parsed < MIN_MEDIA_DATE
+
+
+def filter_min_media_date(items, now_utc: dt.datetime, *fields: str):
+    return [i for i in items if not is_before_min_media_date(i, now_utc, *fields)]
+
+
 def render_stat_grid(stats: list[tuple[str, object]]) -> str:
     items = [
         f'<div class="stat-box"><span>{esc(label)}</span><strong>{value if isinstance(value, str) and value.startswith("<time ") else esc(value)}</strong></div>'
@@ -620,6 +630,19 @@ def collect_seen_items(news, gh, hn, reddit, youtube, remove_urls: set[str]):
 
 def prune_removed_seen(seen: dict, remove_urls: set[str]) -> int:
     removed_ids = [item_id for item_id, item in seen.items() if is_removed_url(item.get("url", ""), remove_urls)]
+    for item_id in removed_ids:
+        seen.pop(item_id, None)
+    return len(removed_ids)
+
+
+def prune_old_media_seen(seen: dict, now_utc: dt.datetime) -> int:
+    removed_ids = []
+    for item_id, item in seen.items():
+        source = str(item.get("source") or "")
+        if source.startswith("GitHub") or source.startswith("X /"):
+            continue
+        if is_before_min_media_date(item, now_utc, "published_at"):
+            removed_ids.append(item_id)
     for item_id in removed_ids:
         seen.pop(item_id, None)
     return len(removed_ids)
@@ -789,17 +812,17 @@ def main():
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
     youtube, youtube_err = youtube_hits()
-    news = sort_by_recency([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")
-    hn = sort_by_recency([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at")
-    reddit = sort_by_recency([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created")
-    youtube = sort_by_recency([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")
+    news = sort_by_recency(filter_min_media_date([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published"), now_utc, "published")
+    hn = sort_by_recency(filter_min_media_date([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at"), now_utc, "created_at")
+    reddit = sort_by_recency(filter_min_media_date([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created"), now_utc, "created_at", "created")
+    youtube = sort_by_recency(filter_min_media_date([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published"), now_utc, "published")
     if gh and gh.get("latest_open"):
         gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
     errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
-    pruned_count = prune_removed_seen(seen, remove_urls)
+    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc)
     current_items = collect_seen_items(news, gh, hn, reddit, youtube, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
