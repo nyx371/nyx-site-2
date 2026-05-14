@@ -690,6 +690,11 @@ def parse_datetime_value(value: str, now_utc: dt.datetime | None = None):
     return None
 
 
+def datetime_iso(value: str, now_utc: dt.datetime | None = None) -> str:
+    parsed = parse_datetime_value(value, now_utc)
+    return parsed.astimezone(dt.timezone.utc).isoformat() if parsed else ""
+
+
 def relative_time_text(value: str, now_utc: dt.datetime) -> str:
     parsed = parse_datetime_value(value, now_utc)
     if not parsed:
@@ -865,7 +870,7 @@ def save_seen_state(state):
     SEEN_STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def collect_seen_items(news, gh, hn, reddit, youtube, x_search, remove_urls: set[str]):
+def collect_seen_items(news, gh, hn, reddit, youtube, x_search, now_utc: dt.datetime, remove_urls: set[str]):
     items = []
     for i in news:
         items.append({"source": i.get("source") or "News", "title": i.get("title"), "url": i.get("url"), "meta": i.get("published"), "published_at": i.get("published")})
@@ -886,6 +891,8 @@ def collect_seen_items(news, gh, hn, reddit, youtube, x_search, remove_urls: set
         items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta, "metrics": i.get("metrics") or i.get("views"), "published_at": i.get("published")})
     items = [item for item in items if not is_removed_url(item.get("url", ""), remove_urls)]
     for item in items:
+        if item.get("published_at"):
+            item["published_at"] = datetime_iso(item.get("published_at"), now_utc) or item.get("published_at")
         item["id"] = item_key(item.get("source", ""), item.get("title", ""), item.get("url", ""))
     return items
 
@@ -915,6 +922,30 @@ def prune_presave_seen(seen: dict) -> int:
     for item_id in removed_ids:
         seen.pop(item_id, None)
     return len(removed_ids)
+
+
+def normalize_seen_dates(seen: dict, now_utc: dt.datetime) -> int:
+    """Migrate relative stored dates to absolute timestamps so charts don't drift."""
+    changed = 0
+    for item in seen.values():
+        value = item.get("published_at")
+        if not value:
+            parsed = x_status_datetime(item.get("url", ""))
+            if parsed:
+                item["published_at"] = parsed.isoformat()
+                changed += 1
+            continue
+        try:
+            dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            continue
+        except Exception:
+            pass
+        anchor = parse_datetime_value(item.get("last_seen_at"), now_utc) or parse_datetime_value(item.get("first_seen_at"), now_utc) or now_utc
+        parsed = parse_datetime_value(value, anchor)
+        if parsed:
+            item["published_at"] = parsed.astimezone(dt.timezone.utc).isoformat()
+            changed += 1
+    return changed
 
 
 def render_new_items(new_items, initialized: bool, now_utc: dt.datetime):
@@ -1027,9 +1058,14 @@ def social_or_media_item_day(item: dict, now_utc: dt.datetime):
 
 def render_social_posts_chart(seen: dict, today: dt.date, now_utc: dt.datetime) -> str:
     counts = {}
+    counted = set()
     for item in seen.values():
         if not is_social_or_media_source(item.get("source", "")):
             continue
+        key = normalize_url(item.get("url", "")) or item.get("id") or item.get("title")
+        if key in counted:
+            continue
+        counted.add(key)
         day = social_or_media_item_day(item, now_utc)
         if day:
             counts[day] = counts.get(day, 0) + 1
@@ -1094,8 +1130,9 @@ def main():
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
+    normalized_date_count = normalize_seen_dates(seen, now_utc)
     pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen)
-    current_items = collect_seen_items(news, gh, hn, reddit, youtube, x_search, remove_urls)
+    current_items = collect_seen_items(news, gh, hn, reddit, youtube, x_search, now_utc, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
     for i in current_items:
@@ -1266,7 +1303,7 @@ def main():
       <section class="card social-site"><h2>Hacker News <span class="count">{len(hn)} items</span></h2><ul>{hn_html}</ul></section>
       {f'<section class="card social-site"><h2>Other <span class="count">{len(other_social_items)} items</span></h2><ul>{other_html}</ul></section>' if other_html else ''}
     </section>
-    <section class="card"><h2>Remove list</h2><p class="empty">{len(remove_urls)} URLs excluded from this snapshot. {pruned_count} previously tracked matches pruned this run.</p></section>
+    <section class="card"><h2>Remove list</h2><p class="empty">{len(remove_urls)} URLs excluded from this snapshot. {pruned_count} previously tracked matches pruned this run. {normalized_date_count} stored dates normalized for chart stability.</p></section>
     {errors_html}
   </main>
   <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, YouTube searches, Hacker News Algolia API, tools/reddit_reader.py, search-engine site:x.com sweeps, plus curated social overrides.</footer>
