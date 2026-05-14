@@ -43,16 +43,6 @@ YOUTUBE_QUERIES = [
     'OpenClaw Claude Spotify podcast',
     '"Spotify Personal Podcasts" "AI agents"',
 ]
-X_SEARCH_QUERIES = [
-    'site:x.com "Save to Spotify" Spotify',
-    'site:x.com "save-to-spotify"',
-    'site:x.com "Personal Podcasts" Spotify',
-    'site:x.com "personal-podcasts-launch"',
-    'site:x.com "github.com/spotify/save-to-spotify"',
-    'site:x.com "newsroom.spotify.com/2026/05/07/personal-podcasts-launch"',
-    'site:twitter.com "Save to Spotify" Spotify',
-    'site:twitter.com "save-to-spotify"',
-]
 CLAWHUB_URL = "https://clawhub.ai/spotify/save-to-spotify"
 
 CURATED_SOCIAL = [
@@ -172,35 +162,35 @@ CURATED_SOCIAL = [
         "source": "X / @Intellectualins",
         "title": "Spotify has launched a new command-line tool called “Save to Spotify”.",
         "url": "https://x.com/Intellectualins/status/2053407194322813179",
-        "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "note": "Tracked via logged-in X browser sweep / curated override.",
         "metrics": "70 views",
     },
     {
         "source": "X / @kallepersson",
         "title": "Launch post: proud of launching Save to Spotify together with the team.",
         "url": "https://x.com/kallepersson/status/2052439008316096798",
-        "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "note": "Tracked via logged-in X browser sweep / curated override.",
         "metrics": "2 replies · 2 reposts · 8 likes · 470 views",
     },
     {
         "source": "X / @laytoun",
         "title": "Save to Spotify works seamlessly with Codex, Claude Code, or any agent.",
         "url": "https://x.com/laytoun/status/2054623407975620937",
-        "note": "Found via Google site:x.com sweep for Save to Spotify; refreshed via logged-in X live search.",
+        "note": "Tracked via logged-in X browser sweep / curated override.",
         "metrics": "6 likes · 1 bookmark · 810 views",
     },
     {
         "source": "X / @Techmeme",
         "title": "Techmeme: Spotify launches Save to Spotify for AI-generated podcasts.",
         "url": "https://x.com/Techmeme/status/2052398586709881106",
-        "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "note": "Tracked via logged-in X browser sweep / curated override.",
         "metrics": "5 likes · 3 bookmarks · 1,811 views",
     },
     {
         "source": "X / @GustavS",
         "title": "Spotify launch/share post linking the save-to-spotify GitHub repo.",
         "url": "https://x.com/GustavS/status/2052437581946618009",
-        "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "note": "Tracked via logged-in X browser sweep / curated override.",
         "metrics": "1 reply · 2 reposts · 22 likes · 35 bookmarks · 2,736 views",
     },
     {
@@ -493,92 +483,10 @@ def _first_metric(text: str, label: str) -> str:
     return f"{value} {suffix}"
 
 
-def extract_social_metrics(text: str) -> str:
-    text = _strip_tags(text)
-    metrics = []
-    for label in ("reply", "repost", "quote", "like", "bookmark", "view"):
-        metric = _first_metric(text, label)
-        if metric:
-            metrics.append(metric)
-    return " · ".join(dict.fromkeys(metrics))
-
-
 def metric_label(value: str, singular: str, plural: str | None = None) -> str:
     plural = plural or f"{singular}s"
     normalized = str(value or "").strip().replace(",", "")
     return singular if normalized in {"1", "1.0"} else plural
-
-
-def x_search_hits(limit: int = 80):
-    """Best-effort X discovery using public search-engine result pages.
-
-    This is intentionally not described as complete: search engines may rank, omit,
-    de-index, challenge, or lag X content. Curated X links below remain as overrides.
-    """
-    out = []
-    seen_urls = set()
-    errors = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; nyx-save-to-spotify-tracker/1.0)",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-
-    def add_hit(url: str, title: str, snippet: str, engine: str, query: str):
-        status_url = _canonical_x_status_url(url)
-        if not status_url or status_url in seen_urls:
-            return
-        seen_urls.add(status_url)
-        source = "X / @" + urllib.parse.urlparse(status_url).path.strip("/").split("/", 1)[0]
-        title = _strip_tags(title) or snippet or status_url
-        snippet = _strip_tags(snippet)
-        metrics = extract_social_metrics(f"{title} {snippet}")
-        published_at = x_status_datetime(status_url)
-        out.append({
-            "source": source,
-            "title": title,
-            "url": status_url,
-            "note": f"Search sweep: {engine}; query: {query}" + (f" · {snippet}" if snippet and snippet != title else ""),
-            "metrics": metrics,
-            "published_at": published_at.isoformat() if published_at else None,
-            "query": query,
-            "engine": engine,
-        })
-
-    for query in X_SEARCH_QUERIES:
-        q = urllib.parse.quote_plus(query)
-        search_pages = [
-            ("Google", f"https://www.google.com/search?q={q}"),
-            ("Bing", f"https://www.bing.com/search?q={q}"),
-            ("DuckDuckGo", f"https://duckduckgo.com/html/?q={q}"),
-            ("Yahoo", f"https://search.yahoo.com/search?p={q}"),
-        ]
-        for engine, search_url in search_pages:
-            try:
-                req = urllib.request.Request(search_url, headers=headers)
-                with urllib.request.urlopen(req, timeout=20) as r:
-                    doc = r.read().decode("utf-8", errors="replace")
-                if "duckduckgo.com/anomaly" in doc or "challenge-form" in doc:
-                    errors.append(f"{engine}: bot-detection challenge for {query}")
-                    continue
-                before = len(out)
-                # Generic pass: any visible status URL in the result page.
-                for m in re.finditer(r"https?://(?:mobile\\.)?(?:twitter|x)\\.com/[^\\s'\"<>]+/status/\\d+[^\\s'\"<>]*", doc):
-                    add_hit(m.group(0), "", "", engine, query)
-                # DuckDuckGo result blocks.
-                for m in re.finditer(r'(?is)<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>(.*?)</a>(.*?)(?=<a[^>]+class="[^"]*result__a|</body>)', doc):
-                    add_hit(m.group(1), m.group(2), m.group(3), engine, query)
-                # Bing/Yahoo/Google-ish anchors. Keep it conservative: only x/twitter status targets survive.
-                for m in re.finditer(r'(?is)<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', doc):
-                    add_hit(m.group(1), m.group(2), "", engine, query)
-                if len(out) == before and engine in {"Google", "Bing", "Yahoo"}:
-                    # Not an error by itself, but useful when auditing coverage.
-                    pass
-                if len(out) >= limit:
-                    return out[:limit], ("; ".join(dict.fromkeys(errors)) if errors else None)
-                time.sleep(0.2)
-            except Exception as e:
-                errors.append(f"{engine}: {query}: {e!r}")
-    return out[:limit], ("; ".join(dict.fromkeys(errors)) if errors else None)
 
 
 def _extract_yt_initial_data(doc: str):
@@ -1394,7 +1302,7 @@ def main():
     youtube, youtube_err = youtube_hits()
     youtube_sweep_note = run_youtube_recent_sweep()
     youtube_browser, youtube_browser_err = load_youtube_recent_posts()
-    x_search, x_search_err = x_search_hits()
+    x_search, x_search_err = [], None
     x_sweep_note = run_x_logged_in_sweep()
     x_browser, x_browser_err = load_x_logged_in_posts(now_utc)
     news = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
@@ -1404,7 +1312,6 @@ def main():
     youtube_browser = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in youtube_browser if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
     youtube = dedupe_items_by_url(sort_by_recency(youtube_browser + youtube, now_utc, "published"))
     youtube_metrics_err = enrich_youtube_metrics(youtube)
-    x_search = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_search if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
     x_browser = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_browser if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
     if gh and gh.get("latest_open"):
         gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
@@ -1596,7 +1503,7 @@ def main():
     <section class="card"><h2>Remove list</h2><p class="empty">{len(remove_urls)} URLs excluded from this snapshot. {pruned_count} previously tracked matches pruned this run. {normalized_date_count} stored dates normalized for chart stability.</p></section>
     {errors_html}
   </main>
-  <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, YouTube searches, Hacker News Algolia API, tools/reddit_reader.py, search-engine site:x.com sweeps, plus curated social overrides.</footer>
+  <footer>Generated by Nyx. Sources are fetched from Google News RSS, GitHub API, ClawHub public skill page, YouTube searches, Hacker News Algolia API, tools/reddit_reader.py, logged-in X browser sweeps, plus curated social overrides.</footer>
   <script>
     (() => {{
       const hideTooltip = (wrap) => wrap?.querySelector('.chart-tooltip')?.classList.remove('visible');
