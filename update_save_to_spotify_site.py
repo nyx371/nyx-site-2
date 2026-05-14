@@ -33,11 +33,13 @@ SEARCH_TERMS = [
 ]
 NEWS_QUERY = '("Save to Spotify" OR "save-to-spotify") Spotify AI podcasts'
 YOUTUBE_QUERIES = [
-    '"save to spotify" CLI',
+    '"save to spotify"',
     '"save-to-spotify"',
-    'Spotify "Personal Podcasts" "AI agents"',
-    '"Spotify Personal Podcasts"',
-    '"personal-podcasts-launch"',
+    '"Save AI Podcasts to Spotify"',
+    '"Save to Spotify" Spotify AI podcast',
+    '"Save to Spotify" Claude Code OpenClaw Codex',
+    'OpenClaw Claude Spotify podcast',
+    '"Spotify Personal Podcasts" "AI agents"',
 ]
 X_SEARCH_QUERIES = [
     'site:x.com "Save to Spotify" Spotify',
@@ -635,8 +637,32 @@ def _walk_dicts(value):
             yield from _walk_dicts(child)
 
 
+def _yt_snippet(video: dict) -> str:
+    parts = [
+        _yt_text(video.get("descriptionSnippet")),
+        _yt_text(video.get("detailedMetadataSnippets")),
+    ]
+    for snippet in video.get("detailedMetadataSnippets") or []:
+        parts.append(_yt_text(snippet.get("snippetText")))
+    return " ".join(part for part in parts if part)
+
+
+def is_relevant_youtube_hit(item: dict) -> bool:
+    text = " ".join(str(item.get(k) or "") for k in ("title", "channel", "snippet")).lower()
+    text = re.sub(r"https?://\S+", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    if re.search(r"\bpre(?:-|\s*)save\b|presave", text):
+        return False
+    has_product = bool(re.search(r"\bsave(?:-|\s+)to(?:-|\s+)spotify\b|\bsave-to-spotify\b", text))
+    context_terms = ("ai", "agent", "podcast", "personal", "claude", "openclaw", "codex", "github", "cli", "command line", "command-line", "automation", "automate")
+    has_context = any(term in text for term in context_terms)
+    has_save_spotify_context = "save" in text and "spotify" in text and has_context
+    has_personal_podcast = "spotify" in text and bool(re.search(r"\bpersonal podcasts?\b", text))
+    return (has_product and has_context) or has_save_spotify_context or has_personal_podcast
+
+
 def youtube_hits(limit: int = 100):
-    """Fetch YouTube search results from public search pages (no API key)."""
+    """Fetch recently uploaded, product-relevant YouTube search results (no API key)."""
     out = []
     seen_video_ids = set()
     errors = []
@@ -648,7 +674,7 @@ def youtube_hits(limit: int = 100):
     for query in YOUTUBE_QUERIES:
         q = urllib.parse.quote_plus(query)
         search_urls = [
-            f"https://www.youtube.com/results?search_query={q}",
+            # sp=CAI%253D is YouTube's "Recently uploaded" search filter.
             f"https://www.youtube.com/results?search_query={q}&sp=CAI%253D",
         ]
         for url in search_urls:
@@ -668,16 +694,20 @@ def youtube_hits(limit: int = 100):
                     title = _yt_text(video.get("title")) or "Untitled video"
                     if not video_id or video_id in seen_video_ids:
                         continue
-                    seen_video_ids.add(video_id)
-                    out.append({
+                    item = {
                         "title": title,
                         "url": f"https://www.youtube.com/watch?v={video_id}",
                         "channel": _yt_text(video.get("ownerText")) or _yt_text(video.get("longBylineText")) or "YouTube",
                         "published": _yt_text(video.get("publishedTimeText")),
                         "views": _yt_text(video.get("viewCountText")),
                         "duration": _yt_text(video.get("lengthText")),
+                        "snippet": _yt_snippet(video),
                         "query": query,
-                    })
+                    }
+                    if not is_relevant_youtube_hit(item):
+                        continue
+                    seen_video_ids.add(video_id)
+                    out.append(item)
                     if len(out) >= limit:
                         return out, ("; ".join(errors) if errors else None)
             except Exception as e:
@@ -1060,7 +1090,7 @@ def collect_seen_items(news, gh, hn, reddit, youtube, x_search, x_browser, now_u
         items.append({"source": i.get("subreddit") or "Reddit", "title": i.get("title"), "url": i.get("url"), "meta": f"u/{i.get('author')} · {i.get('score')} pts · {i.get('comments')} comments", "published_at": i.get("created_at") or i.get("created")})
     for i in youtube:
         meta = " · ".join(part for part in [i.get("channel"), i.get("published"), i.get("views"), i.get("duration")] if part)
-        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta, "metrics": i.get("metrics") or i.get("views"), "published_at": i.get("published")})
+        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta, "metrics": i.get("metrics") or i.get("views"), "snippet": i.get("snippet"), "published_at": i.get("published")})
     items = [item for item in items if not is_removed_url(item.get("url", ""), remove_urls)]
     for item in items:
         if item.get("published_at"):
@@ -1091,6 +1121,16 @@ def prune_old_media_seen(seen: dict, now_utc: dt.datetime) -> int:
 
 def prune_presave_seen(seen: dict) -> int:
     removed_ids = [item_id for item_id, item in seen.items() if has_presave_title(item)]
+    for item_id in removed_ids:
+        seen.pop(item_id, None)
+    return len(removed_ids)
+
+
+def prune_irrelevant_youtube_seen(seen: dict) -> int:
+    removed_ids = [
+        item_id for item_id, item in seen.items()
+        if item.get("source") == "YouTube" and not is_relevant_youtube_hit(item)
+    ]
     for item_id in removed_ids:
         seen.pop(item_id, None)
     return len(removed_ids)
@@ -1306,7 +1346,7 @@ def main():
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
     normalized_date_count = normalize_seen_dates(seen, now_utc)
-    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen)
+    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen) + prune_irrelevant_youtube_seen(seen)
     current_items = collect_seen_items(news, gh, hn, reddit, youtube, x_search, x_browser, now_utc, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
@@ -1318,6 +1358,7 @@ def main():
             "url": i.get("url"),
             "meta": i.get("meta"),
             "metrics": i.get("metrics"),
+            "snippet": i.get("snippet"),
             "published_at": i.get("published_at"),
             "last_seen_at": now_utc.isoformat(),
         })
