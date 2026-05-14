@@ -650,17 +650,18 @@ def _yt_snippet(video: dict) -> str:
 
 
 def is_relevant_youtube_hit(item: dict) -> bool:
-    text = " ".join(str(item.get(k) or "") for k in ("title", "channel", "snippet")).lower()
-    text = re.sub(r"https?://\S+", " ", text)
+    text = " ".join(str(item.get(k) or "") for k in ("title", "channel", "snippet", "url")).lower()
     text = re.sub(r"\s+", " ", text)
     if re.search(r"\bpre(?:-|\s*)save\b|presave", text):
         return False
+    if re.search(r"open\.spotify\.com/(?:album|artist|playlist|track)|soundcloud\.com|distrokid|hyperfollow", text):
+        return False
     has_product = bool(re.search(r"\bsave(?:-|\s+)to(?:-|\s+)spotify\b|\bsave-to-spotify\b", text))
-    context_terms = ("ai", "agent", "podcast", "personal", "claude", "openclaw", "codex", "github", "cli", "command line", "command-line", "automation", "automate")
+    has_article_slug = "save-to-spotify-ai-podcasts" in text
+    context_terms = ("ai", "agent", "agents", "podcast", "podcasts", "personal", "claude", "openclaw", "codex", "github", "cli", "command line", "command-line", "automation", "automate")
     has_context = any(term in text for term in context_terms)
-    has_save_spotify_context = "save" in text and "spotify" in text and has_context
     has_personal_podcast = "spotify" in text and bool(re.search(r"\bpersonal podcasts?\b", text))
-    return (has_product and has_context) or has_save_spotify_context or has_personal_podcast
+    return ((has_product or has_article_slug) and has_context) or has_personal_podcast
 
 
 def youtube_hits(limit: int = 100):
@@ -1169,14 +1170,29 @@ def prune_presave_seen(seen: dict) -> int:
     return len(removed_ids)
 
 
-def prune_irrelevant_youtube_seen(seen: dict) -> int:
-    removed_ids = [
-        item_id for item_id, item in seen.items()
-        if item.get("source") == "YouTube" and not is_relevant_youtube_hit(item)
-    ]
-    for item_id in removed_ids:
-        seen.pop(item_id, None)
-    return len(removed_ids)
+def youtube_items_from_seen(seen: dict, now_utc: dt.datetime):
+    out = []
+    for item in seen.values():
+        if item.get("source") != "YouTube" or not item.get("url"):
+            continue
+        if has_presave_title(item):
+            continue
+        meta_parts = [part.strip() for part in (item.get("meta") or "").split(" · ")]
+        channel = meta_parts[0] if meta_parts else "YouTube"
+        duration = meta_parts[-1] if meta_parts and re.search(r"^\d+:\d", meta_parts[-1]) else None
+        metrics = item.get("metrics") or ""
+        out.append({
+            "title": item.get("title"),
+            "url": item.get("url"),
+            "channel": channel or "YouTube",
+            "published": item.get("published_at") or item.get("first_seen_at"),
+            "views": metrics if "view" in str(metrics).lower() else None,
+            "metrics": item.get("metrics"),
+            "duration": duration,
+            "snippet": item.get("snippet"),
+            "query": "seen history",
+        })
+    return sort_by_recency(out, now_utc, "published")
 
 
 def normalize_seen_dates(seen: dict, now_utc: dt.datetime) -> int:
@@ -1397,7 +1413,7 @@ def main():
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
     normalized_date_count = normalize_seen_dates(seen, now_utc)
-    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen) + prune_irrelevant_youtube_seen(seen)
+    pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen)
     current_items = collect_seen_items(news, gh, hn, reddit, youtube, x_search, x_browser, now_utc, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
@@ -1445,6 +1461,8 @@ def main():
         f'<li><strong>{esc(i["source"] or "News")}</strong>: {link(i["url"], i["title"])}<small>{time_html(i["published"], now_utc)}</small></li>'
         for i in news
     ) or "<li>No news items found this run.</li>"
+
+    youtube = dedupe_items_by_url(sort_by_recency(youtube + youtube_items_from_seen(seen, now_utc), now_utc, "published"))[:20]
 
     curated_x_items = [i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)]
     x_items = dedupe_items_by_url(sort_by_recency(x_browser + x_search + curated_x_items, now_utc, "published_at"))
