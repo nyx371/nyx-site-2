@@ -664,6 +664,25 @@ def meta_html(parts, now_utc: dt.datetime, date_indexes: set[int] | None = None)
     return " · ".join(rendered)
 
 
+def item_date_value(item: dict, now_utc: dt.datetime) -> str:
+    for field in ("published_at", "created_at", "created", "published"):
+        value = item.get(field)
+        if parse_datetime_value(value, now_utc):
+            return str(value)
+    parsed = x_status_datetime(item.get("url", ""))
+    if parsed:
+        return parsed.isoformat()
+    meta = item.get("meta")
+    if parse_datetime_value(meta, now_utc):
+        return str(meta)
+    return ""
+
+
+def post_meta_html(item: dict, now_utc: dt.datetime, *extra_parts: str) -> str:
+    parts = [item_date_value(item, now_utc), *extra_parts]
+    return meta_html(parts, now_utc, {0})
+
+
 def x_status_datetime(url: str):
     match = re.search(r"(?:twitter|x)\.com/[^/]+/status/(\d+)", str(url or ""))
     if not match:
@@ -826,8 +845,8 @@ def render_new_items(new_items, initialized: bool, now_utc: dt.datetime):
     if not new_items:
         return '<p class="empty">No new tracked posts since the previous update.</p>'
     return "<ul>" + "\n".join(
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{time_html(i.get("meta") or "new", now_utc)}</small></li>'
-        for i in sort_by_recency(new_items, now_utc, "meta", "first_seen_at")
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i.get("url") or "#", i.get("title") or "Untitled")}<small>{post_meta_html(i, now_utc, i.get("meta") or "new")}</small></li>'
+        for i in sort_by_recency(new_items, now_utc, "published_at", "meta", "first_seen_at")
     ) + "</ul>"
 
 
@@ -1048,7 +1067,7 @@ def main():
     other_social_items = sort_by_recency([i for i in CURATED_SOCIAL if i not in x_items and not (i.get("source") or "").lower().startswith("hacker news") and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
 
     x_html = "\n".join(
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{meta_html([i.get("published_at"), i.get("note")], now_utc, {0})}</small></li>'
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{post_meta_html(i, now_utc, i.get("note"))}</small></li>'
         for i in x_items
     ) or "<li>No X posts tracked this run.</li>"
 
@@ -1068,7 +1087,7 @@ def main():
     ) or "<li>No Hacker News hits found this run.</li>"
 
     other_html = "\n".join(
-        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{esc(i["note"])}</small></li>'
+        f'<li><strong>{esc(i["source"])}</strong>: {link(i["url"], i["title"])}<small>{post_meta_html(i, now_utc, i.get("note"))}</small></li>'
         for i in other_social_items
     )
 
