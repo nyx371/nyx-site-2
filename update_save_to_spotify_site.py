@@ -10,6 +10,7 @@ import importlib.util
 import json
 import pathlib
 import re
+import subprocess
 import sys
 import time
 import urllib.parse
@@ -22,6 +23,8 @@ TRACKED_REPO = "spotify/save-to-spotify"
 REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_reader.py")
 SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
+X_LOGGED_IN_POSTS_PATH = pathlib.Path("x_logged_in_posts.json")
+X_LOGGED_IN_SWEEP_SCRIPT = pathlib.Path("x_logged_in_sweep.mjs")
 MIN_MEDIA_DATE = dt.datetime(2026, 5, 7, tzinfo=dt.timezone.utc)
 
 SEARCH_TERMS = [
@@ -905,6 +908,18 @@ def sort_by_recency(items, now_utc: dt.datetime, *fields: str):
     return sorted(items, key=lambda item: recency_datetime(item, now_utc, *fields), reverse=True)
 
 
+def dedupe_items_by_url(items):
+    out = []
+    seen = set()
+    for item in items:
+        key = normalize_url(item.get("url", "")) or item.get("title")
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
 def is_before_min_media_date(item: dict, now_utc: dt.datetime, *fields: str) -> bool:
     parsed = recency_datetime(item, now_utc, *fields)
     return parsed != dt.datetime.min.replace(tzinfo=dt.timezone.utc) and parsed < MIN_MEDIA_DATE
@@ -982,7 +997,50 @@ def save_seen_state(state):
     SEEN_STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def collect_seen_items(news, gh, hn, reddit, youtube, x_search, now_utc: dt.datetime, remove_urls: set[str]):
+def run_x_logged_in_sweep() -> str | None:
+    if not X_LOGGED_IN_SWEEP_SCRIPT.exists():
+        return None
+    try:
+        import os
+        if os.environ.get("STS_SKIP_X_BROWSER_SWEEP"):
+            return None
+        result = subprocess.run(
+            ["node", str(X_LOGGED_IN_SWEEP_SCRIPT)],
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+        )
+        output = " ".join(part.strip() for part in [result.stdout, result.stderr] if part.strip())
+        if result.returncode != 0:
+            return f"Logged-in X sweep exited {result.returncode}: {output[:500]}"
+        return output[:500] if output else None
+    except Exception as e:
+        return f"Logged-in X sweep skipped: {e!r}"
+
+
+def load_x_logged_in_posts(now_utc: dt.datetime):
+    try:
+        data = json.loads(X_LOGGED_IN_POSTS_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return [], None
+    except Exception as e:
+        return [], f"Logged-in X cache read failed: {e!r}"
+    out = []
+    for post in data.get("posts") or []:
+        if not post.get("url"):
+            continue
+        item = dict(post)
+        item["source"] = item.get("source") or "X"
+        item["title"] = item.get("title") or item.get("url")
+        item["note"] = item.get("note") or "Found via logged-in X live search for save-to-spotify."
+        if item.get("published_at"):
+            item["published_at"] = datetime_iso(item.get("published_at"), now_utc) or item.get("published_at")
+        out.append(item)
+    return out, None
+
+
+def collect_seen_items(news, gh, hn, reddit, youtube, x_search, x_browser, now_utc: dt.datetime, remove_urls: set[str]):
     items = []
     for i in news:
         items.append({"source": i.get("source") or "News", "title": i.get("title"), "url": i.get("url"), "meta": i.get("published"), "published_at": i.get("published")})
@@ -994,6 +1052,8 @@ def collect_seen_items(news, gh, hn, reddit, youtube, x_search, now_utc: dt.date
     for i in CURATED_SOCIAL:
         published_at = x_status_datetime(i.get("url", ""))
         items.append({"source": i.get("source") or "Social", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "metrics": i.get("metrics"), "published_at": published_at.isoformat() if published_at else None, "suppress_new": True})
+    for i in x_browser:
+        items.append({"source": i.get("source") or "X", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "metrics": i.get("metrics"), "published_at": i.get("published_at")})
     for i in hn:
         items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments", "published_at": i.get("created_at")})
     for i in reddit:
@@ -1230,21 +1290,24 @@ def main():
     reddit, reddit_err = reddit_hits()
     youtube, youtube_err = youtube_hits()
     x_search, x_search_err = x_search_hits()
+    x_sweep_note = run_x_logged_in_sweep()
+    x_browser, x_browser_err = load_x_logged_in_posts(now_utc)
     news = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in news if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
     hn = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at")), now_utc, "created_at")
     reddit = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created")), now_utc, "created_at", "created")
     youtube = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
     youtube_metrics_err = enrich_youtube_metrics(youtube)
     x_search = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_search if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
+    x_browser = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_browser if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
     if gh and gh.get("latest_open"):
         gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
-    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err, youtube_metrics_err, x_search_err] if e]
+    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err, youtube_metrics_err, x_search_err, x_browser_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
     normalized_date_count = normalize_seen_dates(seen, now_utc)
     pruned_count = prune_removed_seen(seen, remove_urls) + prune_old_media_seen(seen, now_utc) + prune_presave_seen(seen)
-    current_items = collect_seen_items(news, gh, hn, reddit, youtube, x_search, now_utc, remove_urls)
+    current_items = collect_seen_items(news, gh, hn, reddit, youtube, x_search, x_browser, now_utc, remove_urls)
     initialized = bool(seen_state.get("initialized"))
     new_items = [i for i in current_items if initialized and i["id"] not in seen and not i.get("suppress_new")]
     for i in current_items:
@@ -1292,7 +1355,7 @@ def main():
     ) or "<li>No news items found this run.</li>"
 
     curated_x_items = [i for i in CURATED_SOCIAL if (i.get("source") or "").lower().startswith("x /") and not is_removed_url(i.get("url", ""), remove_urls)]
-    x_items = sort_by_recency(x_search + curated_x_items, now_utc, "published_at")
+    x_items = dedupe_items_by_url(sort_by_recency(x_browser + x_search + curated_x_items, now_utc, "published_at"))
     other_social_items = sort_by_recency([i for i in CURATED_SOCIAL if i not in x_items and not (i.get("source") or "").lower().startswith("hacker news") and not is_removed_url(i.get("url", ""), remove_urls)], now_utc)
 
     x_html = "\n".join(
