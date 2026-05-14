@@ -25,6 +25,8 @@ SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
 X_LOGGED_IN_POSTS_PATH = pathlib.Path("x_logged_in_posts.json")
 X_LOGGED_IN_SWEEP_SCRIPT = pathlib.Path("x_logged_in_sweep.mjs")
+YOUTUBE_RECENT_POSTS_PATH = pathlib.Path("youtube_recent_posts.json")
+YOUTUBE_RECENT_SWEEP_SCRIPT = pathlib.Path("youtube_recent_sweep.mjs")
 MIN_MEDIA_DATE = dt.datetime(2026, 5, 7, tzinfo=dt.timezone.utc)
 
 SEARCH_TERMS = [
@@ -1070,6 +1072,47 @@ def load_x_logged_in_posts(now_utc: dt.datetime):
     return out, None
 
 
+def run_youtube_recent_sweep() -> str | None:
+    if not YOUTUBE_RECENT_SWEEP_SCRIPT.exists():
+        return None
+    try:
+        import os
+        if os.environ.get("STS_SKIP_YOUTUBE_BROWSER_SWEEP"):
+            return None
+        result = subprocess.run(
+            ["node", str(YOUTUBE_RECENT_SWEEP_SCRIPT)],
+            text=True,
+            capture_output=True,
+            timeout=90,
+            check=False,
+        )
+        output = " ".join(part.strip() for part in [result.stdout, result.stderr] if part.strip())
+        if result.returncode != 0:
+            return f"YouTube recent sweep exited {result.returncode}: {output[:500]}"
+        return output[:500] if output else None
+    except Exception as e:
+        return f"YouTube recent sweep skipped: {e!r}"
+
+
+def load_youtube_recent_posts():
+    try:
+        data = json.loads(YOUTUBE_RECENT_POSTS_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return [], None
+    except Exception as e:
+        return [], f"YouTube recent cache read failed: {e!r}"
+    out = []
+    for post in data.get("posts") or []:
+        item = dict(post)
+        if not item.get("url"):
+            continue
+        item["channel"] = item.get("channel") or "YouTube"
+        item["query"] = item.get("query") or 'browser: "save to spotify" recently uploaded'
+        if is_relevant_youtube_hit(item):
+            out.append(item)
+    return out, None
+
+
 def collect_seen_items(news, gh, hn, reddit, youtube, x_search, x_browser, now_utc: dt.datetime, remove_urls: set[str]):
     items = []
     for i in news:
@@ -1329,6 +1372,8 @@ def main():
     hn, hn_err = hn_hits()
     reddit, reddit_err = reddit_hits()
     youtube, youtube_err = youtube_hits()
+    youtube_sweep_note = run_youtube_recent_sweep()
+    youtube_browser, youtube_browser_err = load_youtube_recent_posts()
     x_search, x_search_err = x_search_hits()
     x_sweep_note = run_x_logged_in_sweep()
     x_browser, x_browser_err = load_x_logged_in_posts(now_utc)
@@ -1336,12 +1381,14 @@ def main():
     hn = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at")), now_utc, "created_at")
     reddit = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created")), now_utc, "created_at", "created")
     youtube = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
+    youtube_browser = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in youtube_browser if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
+    youtube = dedupe_items_by_url(sort_by_recency(youtube_browser + youtube, now_utc, "published"))
     youtube_metrics_err = enrich_youtube_metrics(youtube)
     x_search = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_search if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
     x_browser = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_browser if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
     if gh and gh.get("latest_open"):
         gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
-    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err, youtube_metrics_err, x_search_err, x_browser_err] if e]
+    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err, youtube_browser_err, youtube_metrics_err, x_search_err, x_browser_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
