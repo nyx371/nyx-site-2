@@ -54,54 +54,63 @@ CURATED_SOCIAL = [
         "title": "Spotify has launched a new command-line tool called “Save to Spotify”.",
         "url": "https://x.com/Intellectualins/status/2053407194322813179",
         "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "metrics": "70 views",
     },
     {
         "source": "X / @kallepersson",
         "title": "Launch post: proud of launching Save to Spotify together with the team.",
         "url": "https://x.com/kallepersson/status/2052439008316096798",
         "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "metrics": "2 replies · 2 reposts · 8 likes · 470 views",
     },
     {
         "source": "X / @laytoun",
         "title": "Save to Spotify works seamlessly with Codex, Claude Code, or any agent.",
         "url": "https://x.com/laytoun/status/2054623407975620937",
         "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "metrics": "5 likes · 1 bookmark · 729 views",
     },
     {
         "source": "X / @Techmeme",
         "title": "Techmeme: Spotify launches Save to Spotify for AI-generated podcasts.",
         "url": "https://x.com/Techmeme/status/2052398586709881106",
         "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "metrics": "5 likes · 3 bookmarks · 1,811 views",
     },
     {
         "source": "X / @GustavS",
         "title": "Spotify launch/share post linking the save-to-spotify GitHub repo.",
         "url": "https://x.com/GustavS/status/2052437581946618009",
         "note": "Found via Google site:x.com sweep for Save to Spotify.",
+        "metrics": "1 reply · 2 reposts · 22 likes · 35 bookmarks · 2,736 views",
     },
     {
         "source": "X / @mignano",
         "title": "Spotify product/startup angle; launch post with visible traction (90+ likes when first checked).",
         "url": "https://x.com/mignano/status/2052774235685208080",
         "note": "Good thread to watch for product/strategy discussion.",
+        "metrics": "7 replies · 2 reposts · 103 likes · 72 bookmarks · 32,997 views",
     },
     {
         "source": "X / @laytoun",
         "title": "Builder/team launch excitement: agents can create Personal Podcasts and save to Spotify.",
         "url": "https://x.com/laytoun/status/2052440113502629939",
         "note": "Useful for launch context and replies from dev circle.",
+        "metrics": "3 replies · 17 likes · 3 bookmarks · 1,091 views",
     },
     {
         "source": "X / @saen_dev",
         "title": "Developer use-case chatter: AI-generated podcasts saved into Spotify library.",
         "url": "https://x.com/saen_dev/status/2052995476987768920",
         "note": "Shows agent/workflow interpretation.",
+        "metrics": "31 views",
     },
     {
         "source": "X / @mediagazer",
         "title": "News syndication mention of Save to Spotify launch.",
         "url": "https://x.com/mediagazer/status/2052398317523378515",
         "note": "Useful for media pickup trail.",
+        "metrics": "1 like · 365 views",
     },
     {
         "source": "Hacker News",
@@ -356,6 +365,31 @@ def _canonical_x_status_url(url: str) -> str:
     return f"https://x.com/{handle}/status/{status_id}"
 
 
+def _first_metric(text: str, label: str) -> str:
+    match = re.search(rf"(?<!\w)([\d][\d,\.]*\s*[KkMm]?\+?)\s+{label}s?\b", text or "", re.I)
+    if not match:
+        return ""
+    value = re.sub(r"\s+", "", match.group(1))
+    suffix = label if value in {"1", "1.0"} else f"{label}s"
+    return f"{value} {suffix}"
+
+
+def extract_social_metrics(text: str) -> str:
+    text = _strip_tags(text)
+    metrics = []
+    for label in ("reply", "repost", "quote", "like", "bookmark", "view"):
+        metric = _first_metric(text, label)
+        if metric:
+            metrics.append(metric)
+    return " · ".join(dict.fromkeys(metrics))
+
+
+def metric_label(value: str, singular: str, plural: str | None = None) -> str:
+    plural = plural or f"{singular}s"
+    normalized = str(value or "").strip().replace(",", "")
+    return singular if normalized in {"1", "1.0"} else plural
+
+
 def x_search_hits(limit: int = 80):
     """Best-effort X discovery using public search-engine result pages.
 
@@ -378,12 +412,14 @@ def x_search_hits(limit: int = 80):
         source = "X / @" + urllib.parse.urlparse(status_url).path.strip("/").split("/", 1)[0]
         title = _strip_tags(title) or snippet or status_url
         snippet = _strip_tags(snippet)
+        metrics = extract_social_metrics(f"{title} {snippet}")
         published_at = x_status_datetime(status_url)
         out.append({
             "source": source,
             "title": title,
             "url": status_url,
             "note": f"Search sweep: {engine}; query: {query}" + (f" · {snippet}" if snippet and snippet != title else ""),
+            "metrics": metrics,
             "published_at": published_at.isoformat() if published_at else None,
             "query": query,
             "engine": engine,
@@ -534,6 +570,48 @@ def youtube_hits(limit: int = 100):
 
     return out, ("; ".join(errors) if errors else None)
 
+
+def _extract_youtube_like_count(doc: str) -> str:
+    # Watch pages usually expose the public like button label in ytInitialData.
+    # The default button title is the current count; the toggled title is count+1.
+    patterns = [
+        r'"defaultButtonViewModel"\s*:\s*\{\s*"buttonViewModel"\s*:\s*\{[^{}]*"iconName"\s*:\s*"LIKE"[^{}]*"title"\s*:\s*"([^"]+)"',
+        r'"accessibilityText"\s*:\s*"like this video along with ([^"]+?) other people"',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, doc, re.I)
+        if match:
+            value = html.unescape(match.group(1)).strip()
+            if value and value.lower() not in {"like", "likes"}:
+                return value
+    return ""
+
+
+def enrich_youtube_metrics(videos: list[dict], limit: int = 30):
+    """Fetch watch pages for best-effort like counts; search results already carry views."""
+    errors = []
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; nyx-save-to-spotify-tracker/1.0)",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    for video in videos[:limit]:
+        metrics = []
+        if video.get("views"):
+            metrics.append(video["views"])
+        try:
+            req = urllib.request.Request(video.get("url", ""), headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as r:
+                doc = r.read().decode("utf-8", errors="replace")
+            likes = _extract_youtube_like_count(doc)
+            if likes:
+                metrics.append(f"{likes} {metric_label(likes, 'like')}")
+            time.sleep(0.1)
+        except Exception as e:
+            errors.append(f"{video.get('url')}: {e!r}")
+        video["metrics"] = " · ".join(dict.fromkeys(metrics))
+    return "; ".join(errors[:5]) + ("; …" if len(errors) > 5 else "") if errors else None
+
+
 def hn_hits():
     try:
         out = []
@@ -679,7 +757,7 @@ def item_date_value(item: dict, now_utc: dt.datetime) -> str:
 
 
 def post_meta_html(item: dict, now_utc: dt.datetime, *extra_parts: str) -> str:
-    parts = [item_date_value(item, now_utc), *extra_parts]
+    parts = [item_date_value(item, now_utc), item.get("metrics"), *extra_parts]
     return meta_html(parts, now_utc, {0})
 
 
@@ -795,17 +873,17 @@ def collect_seen_items(news, gh, hn, reddit, youtube, x_search, remove_urls: set
         for i in gh["latest_open"]:
             items.append({"source": f"GitHub {i.get('kind')}", "title": i.get("title"), "url": i.get("url"), "meta": i.get("created_at")})
     for i in x_search:
-        items.append({"source": i.get("source") or "X", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "published_at": i.get("published_at")})
+        items.append({"source": i.get("source") or "X", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "metrics": i.get("metrics"), "published_at": i.get("published_at")})
     for i in CURATED_SOCIAL:
         published_at = x_status_datetime(i.get("url", ""))
-        items.append({"source": i.get("source") or "Social", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "published_at": published_at.isoformat() if published_at else None, "suppress_new": True})
+        items.append({"source": i.get("source") or "Social", "title": i.get("title"), "url": i.get("url"), "meta": i.get("note"), "metrics": i.get("metrics"), "published_at": published_at.isoformat() if published_at else None, "suppress_new": True})
     for i in hn:
         items.append({"source": "Hacker News", "title": i.get("title"), "url": i.get("url"), "meta": f"{i.get('points')} points · {i.get('comments')} comments", "published_at": i.get("created_at")})
     for i in reddit:
         items.append({"source": i.get("subreddit") or "Reddit", "title": i.get("title"), "url": i.get("url"), "meta": f"u/{i.get('author')} · {i.get('score')} pts · {i.get('comments')} comments", "published_at": i.get("created_at") or i.get("created")})
     for i in youtube:
         meta = " · ".join(part for part in [i.get("channel"), i.get("published"), i.get("views"), i.get("duration")] if part)
-        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta, "published_at": i.get("published")})
+        items.append({"source": "YouTube", "title": i.get("title"), "url": i.get("url"), "meta": meta, "metrics": i.get("metrics") or i.get("views"), "published_at": i.get("published")})
     items = [item for item in items if not is_removed_url(item.get("url", ""), remove_urls)]
     for item in items:
         item["id"] = item_key(item.get("source", ""), item.get("title", ""), item.get("url", ""))
@@ -1008,10 +1086,11 @@ def main():
     hn = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in hn if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at")), now_utc, "created_at")
     reddit = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in reddit if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "created_at", "created")), now_utc, "created_at", "created")
     youtube = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in youtube if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published")), now_utc, "published")
+    youtube_metrics_err = enrich_youtube_metrics(youtube)
     x_search = sort_by_recency(filter_presave_titles(filter_min_media_date([i for i in x_search if not is_removed_url(i.get("url", ""), remove_urls)], now_utc, "published_at")), now_utc, "published_at")
     if gh and gh.get("latest_open"):
         gh["latest_open"] = sort_by_recency(gh["latest_open"], now_utc, "created_at")
-    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err, x_search_err] if e]
+    errors = [e for e in [news_err, gh_err, clawhub_err, hn_err, reddit_err, youtube_err, youtube_metrics_err, x_search_err] if e]
 
     seen_state = load_seen_state()
     seen = seen_state.setdefault("seen", {})
@@ -1026,6 +1105,7 @@ def main():
             "title": i.get("title"),
             "url": i.get("url"),
             "meta": i.get("meta"),
+            "metrics": i.get("metrics"),
             "published_at": i.get("published_at"),
             "last_seen_at": now_utc.isoformat(),
         })
@@ -1077,7 +1157,7 @@ def main():
     ) or "<li>No Reddit hits found this run.</li>"
 
     youtube_html = "\n".join(
-        f'<li><strong>{esc(i.get("channel") or "YouTube")}</strong>: {link(i["url"], i["title"])}<small>{meta_html([i.get("published"), i.get("views"), i.get("duration")], now_utc, {0})}</small></li>'
+        f'<li><strong>{esc(i.get("channel") or "YouTube")}</strong>: {link(i["url"], i["title"])}<small>{post_meta_html(i, now_utc, i.get("duration"))}</small></li>'
         for i in youtube
     ) or "<li>No YouTube videos found this run.</li>"
 
