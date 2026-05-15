@@ -20,7 +20,11 @@ import xml.etree.ElementTree as ET
 REPO_OWNER = "nyx371"
 REPO_NAME = "sts-snapshot"
 TRACKED_REPO = "spotify/save-to-spotify"
-REDDIT_READER = pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_reader.py")
+REDDIT_READER_CANDIDATES = [
+    pathlib.Path("/Users/agent/workspace/tools/reddit_reader.py"),
+    pathlib.Path("/Users/agent/.openclaw/workspace/tools/reddit_reader.py"),
+]
+REDDIT_READER = next((path for path in REDDIT_READER_CANDIDATES if path.exists()), REDDIT_READER_CANDIDATES[0])
 SEEN_STATE_PATH = pathlib.Path("seen_save_to_spotify_posts.json")
 REMOVE_LIST_PATH = pathlib.Path("remove_list.txt")
 X_LOGGED_IN_POSTS_PATH = pathlib.Path("x_logged_in_posts.json")
