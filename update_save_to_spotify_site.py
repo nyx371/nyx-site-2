@@ -797,6 +797,15 @@ def time_html(value: str, now_utc: dt.datetime) -> str:
     return f'<time datetime="{esc(parsed.astimezone(dt.timezone.utc).isoformat())}" title="{esc(exact)}">{esc(relative_time_text(value, now_utc))}</time>'
 
 
+def last_updated_html(now_local: dt.datetime, now_utc: dt.datetime) -> str:
+    display = now_local.replace(microsecond=0).strftime("%Y-%m-%d %H:%M %Z")
+    return (
+        f'<time datetime="{esc(now_utc.replace(microsecond=0).isoformat())}" '
+        f'title="{esc(exact_time_title(now_utc.isoformat(), now_utc))}">{esc(display)}</time> '
+        f'({time_html(now_utc.isoformat(), now_utc)})'
+    )
+
+
 def meta_html(parts, now_utc: dt.datetime, date_indexes: set[int] | None = None) -> str:
     date_indexes = date_indexes or set()
     rendered = []
@@ -1476,7 +1485,7 @@ def main():
     <h1>Save to Spotify chatter tracker</h1>
     <p class="lede">A lightweight hourly snapshot of where people are talking about Spotify’s beta CLI for saving AI-generated personal podcasts into Spotify.</p>
     <div class="meta">
-      <span class="pill">Last updated: {time_html(now_utc.isoformat(), now_utc)}</span>
+      <span class="pill">Last updated: {last_updated_html(now_local, now_utc)}</span>
       <span class="pill">Auto-refresh target: hourly</span>
     </div>
   </header>
