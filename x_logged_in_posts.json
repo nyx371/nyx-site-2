@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-05-17T15:32:42.429Z",
+  "generated_at": "2026-05-17T16:02:34.515Z",
   "search_url": "https://x.com/search?q=%22save-to-spotify%22&src=typed_query&f=live",
   "posts": [
     {
       "source": "X / @laytoun",
-      "title": "Getting hooked My agent is getting dangerously good at teasing me with more audio summaries. And with “save to Spotify,” I’m now generating more of them than I probably should 0:16",
+      "title": "Getting hooked My agent is getting dangerously good at teasing me with more audio summaries. And with “save to Spotify,” I’m now generating more of them than I probably should 0:15",
       "url": "https://x.com/laytoun/status/2055252374726295704",
       "published_at": "2026-05-15T11:42:05.000Z",
       "metrics": "7 likes · 702 views",
@@ -23,7 +23,7 @@
       "title": "Replying to @ArtinBogdanov @GustavS and @Spotify Hey Artin, really cool to see what you've built on top of Save to Spotify. Would love to hear about your use cases, what works well and what we can improve.",
       "url": "https://x.com/kallepersson/status/2055026596726054947",
       "published_at": "2026-05-14T20:44:55.000Z",
-      "metrics": "1 reply · 3 likes · 123 views",
+      "metrics": "1 reply · 3 likes · 126 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -31,7 +31,7 @@
       "title": "A few days ago, @GustavS showed save-to-spotify: a @Spotify skill that lets agents turn calendar, news, and Slack updates into private podcasts. We loved the behavior and put a SUN-spin on it!",
       "url": "https://x.com/ArtinBogdanov/status/2054970126684864841",
       "published_at": "2026-05-14T17:00:32.000Z",
-      "metrics": "8 replies · 5 reposts · 41 likes · 9 bookmarks · 39745 views",
+      "metrics": "8 replies · 5 reposts · 41 likes · 10 bookmarks · 39753 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -111,7 +111,7 @@
       "title": "Translated from Turkish Show original I hadn't seen this. Spotify rolled out a cool feature 3 days ago. Spotify has opened the door for us to add our personal audio content—prepared by AI agents—to our library. Spotify isn't producing the a",
       "url": "https://x.com/erhanmeydan/status/2053557280172642793",
       "published_at": "2026-05-10T19:26:23.000Z",
-      "metrics": "4 replies · 3 reposts · 46 likes · 42 bookmarks · 6320 views",
+      "metrics": "4 replies · 3 reposts · 46 likes · 42 bookmarks · 6321 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -183,7 +183,15 @@
       "title": "spotify just made claude code a podcast distribution channel. save to spotify. command line tool. you pipe a script out of claude code, openai codex, or openclaw and it lands as a real episode on a real show. no upload portal. no editor. no",
       "url": "https://x.com/connordavis_ai/status/2052948272638283850",
       "published_at": "2026-05-09T03:06:24.000Z",
-      "metrics": "1 repost · 2 bookmarks · 185 views",
+      "metrics": "1 repost · 2 bookmarks · 186 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @om_patel5",
+      "title": "SPOTIFY JUST ADDED AI AGENTS TO CREATE PERSONAL PODCASTS AND SAVE THEM DIRECTLY TO YOUR LIBRARY claude code, codex, and openclaw can now generate custom audio content and drop it straight into your spotify you prompt your AI agent and it ge",
+      "url": "https://x.com/om_patel5/status/2052918172592857151",
+      "published_at": "2026-05-09T01:06:48.000Z",
+      "metrics": "3 replies · 2 reposts · 11 likes · 14 bookmarks · 2814 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     }
   ]
