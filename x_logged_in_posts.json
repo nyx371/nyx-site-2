@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T21:32:35.230Z",
+  "generated_at": "2026-05-17T22:02:40.717Z",
   "search_url": "https://x.com/search?q=%22save-to-spotify%22&src=typed_query&f=live",
   "posts": [
     {
@@ -7,7 +7,7 @@
       "title": "Replying to @shela_tw Really cool to see this! I’m on the team that built Save to Spotify. Would love to hear more about your use cases and if there’s anything we can improve further",
       "url": "https://x.com/kallepersson/status/2056057901328769520",
       "published_at": "2026-05-17T17:02:58.000Z",
-      "metrics": "1 like · 8 views",
+      "metrics": "1 like · 11 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -15,7 +15,7 @@
       "title": "Getting hooked My agent is getting dangerously good at teasing me with more audio summaries. And with “save to Spotify,” I’m now generating more of them than I probably should",
       "url": "https://x.com/laytoun/status/2055252374726295704",
       "published_at": "2026-05-15T11:42:05.000Z",
-      "metrics": "7 likes · 712 views",
+      "metrics": "7 likes · 713 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -39,7 +39,7 @@
       "title": "A few days ago, @GustavS showed save-to-spotify: a @Spotify skill that lets agents turn calendar, news, and Slack updates into private podcasts. We loved the behavior and put a SUN-spin on it!",
       "url": "https://x.com/ArtinBogdanov/status/2054970126684864841",
       "published_at": "2026-05-14T17:00:32.000Z",
-      "metrics": "8 replies · 7 reposts · 43 likes · 10 bookmarks · 39986 views",
+      "metrics": "8 replies · 7 reposts · 43 likes · 10 bookmarks · 40096 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -71,7 +71,7 @@
       "title": "@Spotify is testing a new “Save to Spotify” feature that lets AI tools create personal podcasts and save them directly into a user’s Spotify library. The examples are interesting: - daily briefings - study notes - travel plans",
       "url": "https://x.com/DriftNote_/status/2054138230103228837",
       "published_at": "2026-05-12T09:54:52.000Z",
-      "metrics": "1 reply · 1 repost · 51 views",
+      "metrics": "1 reply · 1 repost · 52 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -79,7 +79,7 @@
       "title": "I built a Hermes workflow that uses Spotify’s Save to Spotify tool as the publishing layer, turning text or local audio into Spotify episodes with new show creation, cover art, and chapter timelines In one local test run, Hermes wrote two p",
       "url": "https://x.com/shela_tw/status/2053833151047205061",
       "published_at": "2026-05-11T13:42:36.000Z",
-      "metrics": "1 reply · 16 likes · 384 views",
+      "metrics": "1 reply · 16 likes · 387 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -200,14 +200,6 @@
       "url": "https://x.com/om_patel5/status/2052918172592857151",
       "published_at": "2026-05-09T01:06:48.000Z",
       "metrics": "3 replies · 2 reposts · 11 likes · 14 bookmarks · 2826 views",
-      "note": "Found via logged-in X live search for save-to-spotify."
-    },
-    {
-      "source": "X / @ArtinBogdanov",
-      "title": "Replying to @GustavS We just created Sun , a skill that pairs with your Save-to-Spotify CLI to generate higher-quality personal podcasts (faster too, and cheaper). Repo: https:// github.com/sunapp-ai/sun-",
-      "url": "https://x.com/ArtinBogdanov/status/2052908832314233193",
-      "published_at": "2026-05-09T00:29:41.000Z",
-      "metrics": "2 replies · 1 repost · 9 likes · 3 bookmarks · 576 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     }
   ]
