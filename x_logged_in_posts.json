@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T13:32:34.040Z",
+  "generated_at": "2026-05-17T14:02:38.999Z",
   "search_url": "https://x.com/search?q=%22save-to-spotify%22&src=typed_query&f=live",
   "posts": [
     {
@@ -31,7 +31,7 @@
       "title": "A few days ago, @GustavS showed save-to-spotify: a @Spotify skill that lets agents turn calendar, news, and Slack updates into private podcasts. We loved the behavior and put a SUN-spin on it!",
       "url": "https://x.com/ArtinBogdanov/status/2054970126684864841",
       "published_at": "2026-05-14T17:00:32.000Z",
-      "metrics": "8 replies · 5 reposts · 41 likes · 9 bookmarks · 39720 views",
+      "metrics": "8 replies · 5 reposts · 41 likes · 9 bookmarks · 39724 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -103,7 +103,7 @@
       "title": "Translated from Turkish Show original Another busy week, and I struggled to choose again. I've listed what I consider the week's standout developments in my own way—if I've missed anything, I'd be happy if you add it :) → Anthropic announce",
       "url": "https://x.com/erhanmeydan/status/2053565399279763846",
       "published_at": "2026-05-10T19:58:39.000Z",
-      "metrics": "2 replies · 3 reposts · 34 likes · 6 bookmarks · 3060 views",
+      "metrics": "2 replies · 3 reposts · 34 likes · 6 bookmarks · 3062 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -111,7 +111,7 @@
       "title": "Translated from Turkish Show original I hadn't seen this. Spotify rolled out a cool feature 3 days ago. Spotify has opened the door for us to add our personal audio content—prepared by AI agents—to our library. Spotify isn't producing the a",
       "url": "https://x.com/erhanmeydan/status/2053557280172642793",
       "published_at": "2026-05-10T19:26:23.000Z",
-      "metrics": "4 replies · 3 reposts · 46 likes · 42 bookmarks · 6315 views",
+      "metrics": "4 replies · 3 reposts · 46 likes · 42 bookmarks · 6318 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -119,7 +119,7 @@
       "title": "Spotify has launched a new command‑line tool called “Save to Spotify” that lets users save AI‑generated podcasts directly into their Spotify podcast feed. It is designed to work with AI agents such as OpenClaw, Claude Code, or OpenAI Codex ",
       "url": "https://x.com/Intellectualins/status/2053407194322813179",
       "published_at": "2026-05-10T09:30:00.000Z",
-      "metrics": "71 views",
+      "metrics": "72 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -167,7 +167,7 @@
       "title": "My daily morning routine lately, starting with a 5min AI news roundup generated daily by Aziz (my Openclaw agent) using save to Spotify! Helps keeping up with this fast moving space and tailor the news to your preferences. Episode got image",
       "url": "https://x.com/laytoun/status/2053043413415563503",
       "published_at": "2026-05-09T09:24:28.000Z",
-      "metrics": "2 replies · 1 repost · 29 likes · 5 bookmarks · 1278 views",
+      "metrics": "2 replies · 1 repost · 29 likes · 5 bookmarks · 1279 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -192,14 +192,6 @@
       "url": "https://x.com/om_patel5/status/2052918172592857151",
       "published_at": "2026-05-09T01:06:48.000Z",
       "metrics": "3 replies · 2 reposts · 11 likes · 14 bookmarks · 2813 views",
-      "note": "Found via logged-in X live search for save-to-spotify."
-    },
-    {
-      "source": "X / @ArtinBogdanov",
-      "title": "Replying to @GustavS We just created Sun , a skill that pairs with your Save-to-Spotify CLI to generate higher-quality personal podcasts (faster too, and cheaper). Repo: https:// github.com/sunapp-ai/sun-",
-      "url": "https://x.com/ArtinBogdanov/status/2052908832314233193",
-      "published_at": "2026-05-09T00:29:41.000Z",
-      "metrics": "2 replies · 1 repost · 9 likes · 3 bookmarks · 573 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     }
   ]
