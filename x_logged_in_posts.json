@@ -1,5 +1,198 @@
 {
-  "generated_at": "2026-05-17T12:04:22.407Z",
+  "generated_at": "2026-05-17T13:06:00.629Z",
   "search_url": "https://x.com/search?q=%22save-to-spotify%22&src=typed_query&f=live",
-  "posts": []
+  "posts": [
+    {
+      "source": "X / @laytoun",
+      "title": "Getting hooked My agent is getting dangerously good at teasing me with more audio summaries. And with “save to Spotify,” I’m now generating more of them than I probably should",
+      "url": "https://x.com/laytoun/status/2055252374726295704",
+      "published_at": "2026-05-15T11:42:05.000Z",
+      "metrics": "7 likes · 700 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @yashad",
+      "title": "Replying to @yashad @Spotify and @NousResearch 9/x",
+      "url": "https://x.com/yashad/status/2055184914560237832",
+      "published_at": "2026-05-15T07:14:01.000Z",
+      "metrics": "1 reply · 1 like · 39 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @kallepersson",
+      "title": "Replying to @ArtinBogdanov @GustavS and @Spotify Hey Artin, really cool to see what you've built on top of Save to Spotify. Would love to hear about your use cases, what works well and what we can improve.",
+      "url": "https://x.com/kallepersson/status/2055026596726054947",
+      "published_at": "2026-05-14T20:44:55.000Z",
+      "metrics": "1 reply · 3 likes · 121 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @ArtinBogdanov",
+      "title": "A few days ago, @GustavS showed save-to-spotify: a @Spotify skill that lets agents turn calendar, news, and Slack updates into private podcasts. We loved the behavior and put a SUN-spin on it!",
+      "url": "https://x.com/ArtinBogdanov/status/2054970126684864841",
+      "published_at": "2026-05-14T17:00:32.000Z",
+      "metrics": "8 replies · 5 reposts · 41 likes · 9 bookmarks · 39713 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @laytoun",
+      "title": "We spent a lot of time iterating on the experience to make it easy to get started! Happy to hear the positive feedback. Save to Spotify works seamlessly with Codex, Claude code or any agent. Give it a spin and share your feedback with us Qu",
+      "url": "https://x.com/laytoun/status/2054623407975620937",
+      "published_at": "2026-05-13T18:02:48.000Z",
+      "metrics": "6 likes · 956 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @InnerGNas",
+      "title": "Save to Spotify A command-line tool for saving audio content to Spotify. Built for agents and automation — generate a daily briefing, language lesson, or meeting recap, then push it to Spotify where it's available alongside your other liste",
+      "url": "https://x.com/InnerGNas/status/2054619124391682310",
+      "published_at": "2026-05-13T17:45:46.000Z",
+      "metrics": "2 likes · 40 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @richeholmes",
+      "title": "Spotify has released a Command Line Interface tool called “Save to Spotify”. It lets you connect tools like Claude Code generate podcasts from any text source and then store it it to your library. Spotify’s suggested use cases include thing",
+      "url": "https://x.com/richeholmes/status/2054149614601711777",
+      "published_at": "2026-05-12T10:40:07.000Z",
+      "metrics": "1 like · 121 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @DriftNote_",
+      "title": "@Spotify is testing a new “Save to Spotify” feature that lets AI tools create personal podcasts and save them directly into a user’s Spotify library. The examples are interesting: - daily briefings - study notes - travel plans",
+      "url": "https://x.com/DriftNote_/status/2054138230103228837",
+      "published_at": "2026-05-12T09:54:52.000Z",
+      "metrics": "1 reply · 1 repost · 51 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @shela_tw",
+      "title": "I built a Hermes workflow that uses Spotify’s Save to Spotify tool as the publishing layer, turning text or local audio into Spotify episodes with new show creation, cover art, and chapter timelines In one local test run, Hermes wrote two p",
+      "url": "https://x.com/shela_tw/status/2053833151047205061",
+      "published_at": "2026-05-11T13:42:36.000Z",
+      "metrics": "1 reply · 16 likes · 371 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @Medvidekpu",
+      "title": "Translated from Czech Show original Sunday #newsletter 365tips ::: How to password-protect a folder on a Mac. Does Safari also have a Task Manager? Chrome is filling computers with an unnecessary AI model - Save to Spotify. EU launches camp",
+      "url": "https://x.com/Medvidekpu/status/2053796874012819502",
+      "published_at": "2026-05-11T11:18:27.000Z",
+      "metrics": "347 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @YEB_TO",
+      "title": "Today, Spotify is taking things a step further by launching ‘Save to Spotify’, a new beta tool that turns your AI agent into a personal podcast producer. If you’re already using an AI agent like OpenClaw, Claude Code, or OpenAI Codex on des",
+      "url": "https://x.com/YEB_TO/status/2053788452429131805",
+      "published_at": "2026-05-11T10:44:59.000Z",
+      "metrics": "1 like · 62 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @365tipu",
+      "title": "Translated from Czech Show original Sunday #newsletter ::: How to password-protect a folder on Mac. Does Safari also have a Task Manager? Chrome fills computers with unnecessary AI model - Save to Spotify. EU launches campaign against VPN. ",
+      "url": "https://x.com/365tipu/status/2053771865882034180",
+      "published_at": "2026-05-11T09:39:04.000Z",
+      "metrics": "211 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @erhanmeydan",
+      "title": "Translated from Turkish Show original Another busy week, and I struggled to choose again. I've listed what I consider the week's standout developments in my own way—if I've missed anything, I'd be happy if you add it :) → Anthropic announce",
+      "url": "https://x.com/erhanmeydan/status/2053565399279763846",
+      "published_at": "2026-05-10T19:58:39.000Z",
+      "metrics": "2 replies · 3 reposts · 34 likes · 6 bookmarks · 3060 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @erhanmeydan",
+      "title": "Translated from Turkish Show original I hadn't seen this. Spotify rolled out a cool feature 3 days ago. Spotify has opened the door for us to add our personal audio content—prepared by AI agents—to our library. Spotify isn't producing the a",
+      "url": "https://x.com/erhanmeydan/status/2053557280172642793",
+      "published_at": "2026-05-10T19:26:23.000Z",
+      "metrics": "4 replies · 3 reposts · 46 likes · 42 bookmarks · 6315 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @Intellectualins",
+      "title": "Spotify has launched a new command‑line tool called “Save to Spotify” that lets users save AI‑generated podcasts directly into their Spotify podcast feed. It is designed to work with AI agents such as OpenClaw, Claude Code, or OpenAI Codex ",
+      "url": "https://x.com/Intellectualins/status/2053407194322813179",
+      "published_at": "2026-05-10T09:30:00.000Z",
+      "metrics": "71 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @AIsyuuekika",
+      "title": "Translated from Japanese Show original Spotify has announced a new voice content management tool called \"Save to Spotify\" that utilizes cutting-edge AI technology. I think its effectiveness will depend on how it's used, so I'm super curious",
+      "url": "https://x.com/AIsyuuekika/status/2053333526117032060",
+      "published_at": "2026-05-10T04:37:16.000Z",
+      "metrics": "74 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @ChekosWH",
+      "title": "Translated from Spanish Show original With @ElevenLabs and @GustavS",
+      "url": "https://x.com/ChekosWH/status/2053191057874235655",
+      "published_at": "2026-05-09T19:11:09.000Z",
+      "metrics": "3 likes · 1 bookmark · 148 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @what5new_",
+      "title": "Replying to @what5new_ caranya buka GitHub Spotify (save-to-spotify) Login akun Spotify km, kasih prompt ke AI agent kamu, misalnya: “Buatkan audio session yang bahas sejarah Piala Dunia secara mendalam, pemain kuncinya, lokasi, dan info pe",
+      "url": "https://x.com/what5new_/status/2053140118937211352",
+      "published_at": "2026-05-09T15:48:44.000Z",
+      "metrics": "1 reply · 1 view",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @brainpercent",
+      "title": "ספוטיפיי פתחה את הפלטפורמה שלה לתוכן שנוצר על ידי AI - וזה משנה הכל כלי חדש בשם Save to Spotify מאפשר לסוכני AI כמו Claude ו-OpenAI Codex לשמור פודקאסטים ישירות לספריית המשתמש. מוריד מ-GitHub, מוסיף משפט אחד לפרומפט, והתוכן שלך מופיע בפיד ל",
+      "url": "https://x.com/brainpercent/status/2053134284643250187",
+      "published_at": "2026-05-09T15:25:33.000Z",
+      "metrics": "1 reply · 42 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @sozo_museum",
+      "title": "Translated from Japanese Show original Spotify releases CLI tool \"Save to Spotify\" for saving AI-generated audio content Spotify、AI生成の音声コンテンツを保存できるCLIツール「Save to Spotify」公開 From itmedia.co.jp",
+      "url": "https://x.com/sozo_museum/status/2053106199810453943",
+      "published_at": "2026-05-09T13:33:57.000Z",
+      "metrics": "2 likes · 2 bookmarks · 151 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @laytoun",
+      "title": "My daily morning routine lately, starting with a 5min AI news roundup generated daily by Aziz (my Openclaw agent) using save to Spotify! Helps keeping up with this fast moving space and tailor the news to your preferences. Episode got image",
+      "url": "https://x.com/laytoun/status/2053043413415563503",
+      "published_at": "2026-05-09T09:24:28.000Z",
+      "metrics": "2 replies · 1 repost · 29 likes · 5 bookmarks · 1278 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @BlogNT",
+      "title": "Translated from French Show original Stop reading your articles, listen to them! Spotify launches Save to Spotify, a revolutionary feature where AI transforms your readings into instant personal podcasts. Your tech watch has never been so e",
+      "url": "https://x.com/BlogNT/status/2053035248657510782",
+      "published_at": "2026-05-09T08:52:01.000Z",
+      "metrics": "2 likes · 97 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @connordavis_ai",
+      "title": "spotify just made claude code a podcast distribution channel. save to spotify. command line tool. you pipe a script out of claude code, openai codex, or openclaw and it lands as a real episode on a real show. no upload portal. no editor. no",
+      "url": "https://x.com/connordavis_ai/status/2052948272638283850",
+      "published_at": "2026-05-09T03:06:24.000Z",
+      "metrics": "1 repost · 2 bookmarks · 185 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @om_patel5",
+      "title": "SPOTIFY JUST ADDED AI AGENTS TO CREATE PERSONAL PODCASTS AND SAVE THEM DIRECTLY TO YOUR LIBRARY claude code, codex, and openclaw can now generate custom audio content and drop it straight into your spotify you prompt your AI agent and it ge",
+      "url": "https://x.com/om_patel5/status/2052918172592857151",
+      "published_at": "2026-05-09T01:06:48.000Z",
+      "metrics": "3 replies · 2 reposts · 11 likes · 14 bookmarks · 2813 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    }
+  ]
 }
