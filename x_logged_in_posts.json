@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T06:34:21.650Z",
+  "generated_at": "2026-05-18T07:36:08.277Z",
   "search_url": "https://x.com/search?q=%22save-to-spotify%22&src=typed_query&f=live",
   "posts": [
     {
@@ -7,15 +7,15 @@
       "title": "Replying to @shela_tw Really cool to see this! I’m on the team that built Save to Spotify. Would love to hear more about your use cases and if there’s anything we can improve further",
       "url": "https://x.com/kallepersson/status/2056057901328769520",
       "published_at": "2026-05-17T17:02:58.000Z",
-      "metrics": "1 reply · 1 like · 18 views",
+      "metrics": "1 reply · 1 like · 19 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
       "source": "X / @laytoun",
-      "title": "Getting hooked My agent is getting dangerously good at teasing me with more audio summaries. And with “save to Spotify,” I’m now generating more of them than I probably should 0:16",
+      "title": "Getting hooked My agent is getting dangerously good at teasing me with more audio summaries. And with “save to Spotify,” I’m now generating more of them than I probably should",
       "url": "https://x.com/laytoun/status/2055252374726295704",
       "published_at": "2026-05-15T11:42:05.000Z",
-      "metrics": "7 likes · 715 views",
+      "metrics": "7 likes · 717 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -39,7 +39,7 @@
       "title": "A few days ago, @GustavS showed save-to-spotify: a @Spotify skill that lets agents turn calendar, news, and Slack updates into private podcasts. We loved the behavior and put a SUN-spin on it!",
       "url": "https://x.com/ArtinBogdanov/status/2054970126684864841",
       "published_at": "2026-05-14T17:00:32.000Z",
-      "metrics": "9 replies · 7 reposts · 46 likes · 10 bookmarks · 40577 views",
+      "metrics": "9 replies · 7 reposts · 46 likes · 10 bookmarks · 40610 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     },
     {
@@ -200,6 +200,14 @@
       "url": "https://x.com/om_patel5/status/2052918172592857151",
       "published_at": "2026-05-09T01:06:48.000Z",
       "metrics": "3 replies · 2 reposts · 11 likes · 14 bookmarks · 2826 views",
+      "note": "Found via logged-in X live search for save-to-spotify."
+    },
+    {
+      "source": "X / @ArtinBogdanov",
+      "title": "Replying to @GustavS We just created Sun , a skill that pairs with your Save-to-Spotify CLI to generate higher-quality personal podcasts (faster too, and cheaper). Repo: https:// github.com/sunapp-ai/sun-",
+      "url": "https://x.com/ArtinBogdanov/status/2052908832314233193",
+      "published_at": "2026-05-09T00:29:41.000Z",
+      "metrics": "2 replies · 1 repost · 9 likes · 3 bookmarks · 578 views",
       "note": "Found via logged-in X live search for save-to-spotify."
     }
   ]
